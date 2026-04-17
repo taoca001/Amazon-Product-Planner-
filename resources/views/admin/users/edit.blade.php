@@ -1,0 +1,85 @@
+@extends('layouts.base')
+
+@section('title', 'Benutzer bearbeiten - Product Planner')
+
+@section('content')
+<div class="bg-white rounded-lg shadow-lg overflow-hidden max-w-2xl">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-purple-800 px-6 py-8 text-white">
+        <h1 class="text-3xl font-bold flex items-center gap-2">
+            ✏️ {{ $user->name }} bearbeiten
+        </h1>
+        <p class="text-purple-100 mt-2">{{ $user->email }}</p>
+    </div>
+
+    <!-- Form -->
+    <div class="p-6">
+        <form action="{{ route('admin.users.update', $user) }}" method="POST" class="space-y-6">
+            @csrf
+            @method('PATCH')
+
+            <!-- Name -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                <input type="text" name="name" value="{{ old('name', $user->name) }}" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                       placeholder="z.B. Max Mustermann">
+                @error('name')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">E-Mail *</label>
+                <input type="email" name="email" value="{{ old('email', $user->email) }}" required
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                       placeholder="z.B. max@example.com">
+                @error('email')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Password (Optional for Edit) -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Passwort (Optional)</label>
+                <input type="password" name="password"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                       placeholder="Leer lassen um unverändert zu behalten">
+                <p class="text-xs text-gray-500 mt-1">Geben Sie ein neues Passwort ein, um das alte zu ersetzen</p>
+                @error('password')
+                    <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Confirm Password -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Passwort Bestätigung</label>
+                <input type="password" name="password_confirmation"
+                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                       placeholder="Passwort wiederholen">
+            </div>
+
+            <!-- Admin Checkbox -->
+            <div class="flex items-center gap-3 p-4 bg-purple-50 rounded-lg">
+                <input type="checkbox" id="is_admin" name="is_admin" value="1"
+                       class="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                       {{ old('is_admin', $user->is_admin) ? 'checked' : '' }}>
+                <label for="is_admin" class="text-sm font-medium text-gray-700">
+                    👑 Admin-Rechte
+                </label>
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex gap-4 pt-6 border-t">
+                <button type="submit" class="flex-1 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition">
+                    Änderungen speichern
+                </button>
+                <a href="{{ route('admin.users.show', $user) }}" class="flex-1 px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 font-medium transition text-center">
+                    Abbrechen
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection
