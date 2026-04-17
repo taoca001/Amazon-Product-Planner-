@@ -33,8 +33,8 @@ Route::middleware('auth')->group(function () {
 });
 
 // Admin Routes - Protected by EnsureUserIsAdmin Middleware
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::resource('admin/users', AdminUserController::class);
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::resource('users', AdminUserController::class);
 });
 
 require __DIR__.'/auth.php';
