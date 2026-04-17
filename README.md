@@ -4,10 +4,11 @@ Eine umfassende Web-Anwendung für Amazon-Seller zum einfachen und übersichtlic
 
 ## 📋 Überblick
 
-**Version:** 0.1.0 (In Entwicklung)  
+**Version:** 0.2.0 (In Entwicklung)  
 **Framework:** Laravel 13.5.0  
 **Datenbank:** PostgreSQL  
-**Frontend:** Blade Templates + Tailwind CSS v4
+**Frontend:** Blade Templates + Tailwind CSS v4  
+**Repository:** Git (initialized v0.2.0)
 
 ### Zielgruppe
 Amazon- und Shopify-Seller, die ihre Produktverwaltung professionalisieren möchten.
