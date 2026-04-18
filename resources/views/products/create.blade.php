@@ -4,11 +4,11 @@
 
 @section('content')
 <div class="max-w-2xl mx-auto">
-    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-blue-800 px-6 py-8 text-white">
-            <h1 class="text-3xl font-bold">📦 Neues Produkt erstellen</h1>
-            <p class="text-blue-100 mt-2">Grundinformationen eingeben und los geht's!</p>
+        <div class="px-6 py-3 border-b border-gray-200">
+            <h1 class="text-xl font-bold text-gray-900">📦 Neues Produkt erstellen</h1>
+            <p class="text-gray-400 text-xs mt-0.5">Grundinformationen eingeben und los geht's!</p>
         </div>
 
         <!-- Form -->
@@ -23,7 +23,7 @@
                     name="name" 
                     value="{{ old('name') }}" 
                     required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('name') border-red-500 @enderror"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-700 focus:border-transparent @error('name') border-red-500 @enderror"
                     placeholder="z.B. Wireless Kopfhörer Pro">
                 @error('name')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
@@ -36,7 +36,7 @@
                     id="description"
                     name="description" 
                     rows="4"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-700 focus:border-transparent"
                     placeholder="Produktbeschreibung...">{{ old('description') }}</textarea>
             </div>
 
@@ -52,7 +52,7 @@
                             value="{{ old('price') }}" 
                             step="0.01" 
                             min="0"
-                            class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-700 focus:border-transparent"
                             placeholder="0.00">
                     </div>
                 </div>
@@ -79,7 +79,7 @@
                     id="notes"
                     name="notes" 
                     rows="3"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-700 focus:border-transparent"
                     placeholder="z.B. Supplier-Info, Verfügbarkeit, etc.">{{ old('notes') }}</textarea>
             </div>
 
@@ -87,7 +87,7 @@
             <div class="flex gap-4 pt-6 border-t">
                 <button 
                     type="submit" 
-                    class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md">
+                    class="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-bold shadow-md">
                     Produkt erstellen
                 </button>
                 <a 
@@ -100,41 +100,5 @@
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const addKeywordBtn = document.getElementById('add-keyword');
-    const keywordsContainer = document.getElementById('keywords-container');
-
-    addKeywordBtn.addEventListener('click', function() {
-        const html = `
-            <div class="flex items-center space-x-2">
-                <input 
-                    type="text" 
-                    name="keywords[]"
-                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Keyword (z.B. 'wireless', 'bluetooth')">
-                <button 
-                    type="button" 
-                    class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 remove-keyword">
-                    Entfernen
-                </button>
-            </div>
-        `;
-        keywordsContainer.insertAdjacentHTML('beforeend', html);
-        attachRemoveListeners();
-    });
-
-    function attachRemoveListeners() {
-        document.querySelectorAll('.remove-keyword').forEach(btn => {
-            btn.removeEventListener('click', removeKeyword);
-            btn.addEventListener('click', removeKeyword);
-        });
-    }
-
-    function removeKeyword(e) {
-        e.preventDefault();
-        this.parentElement.remove();
-    }
-});
-</script>
+@include('layouts.partials.keyword-js')
 @endsection

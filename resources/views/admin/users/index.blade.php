@@ -3,18 +3,16 @@
 @section('title', 'User Management - Product Planner')
 
 @section('content')
-<div class="bg-white rounded-lg shadow-lg overflow-hidden">
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-purple-600 to-purple-800 px-6 py-8 text-white">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold">👥 User Management</h1>
-                <p class="text-purple-100 mt-2">Verwalte alle Benutzer des Systems</p>
-            </div>
-            <a href="{{ route('admin.users.create') }}" class="px-6 py-3 bg-white text-purple-600 rounded-lg hover:bg-purple-50 font-medium transition">
-                + Neuer Benutzer
-            </a>
+    <div class="px-6 py-3 border-b border-gray-200 flex items-center justify-between">
+        <div>
+            <h1 class="text-xl font-bold text-gray-900">👥 User Management</h1>
+            <p class="text-gray-400 text-xs mt-0.5">Verwalte alle Benutzer des Systems</p>
         </div>
+        <a href="{{ route('admin.users.create') }}" class="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium text-sm transition">
+            + Neuer Benutzer
+        </a>
     </div>
 
     <!-- Success/Error Messages -->
@@ -69,7 +67,7 @@
                                     {{ $user->created_at->format('d.m.Y H:i') }}
                                 </td>
                                 <td class="px-4 py-3 flex gap-2">
-                                    <a href="{{ route('admin.users.show', $user) }}" class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                                    <a href="{{ route('admin.users.show', $user) }}" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-900">
                                         Ansehen
                                     </a>
                                     <a href="{{ route('admin.users.edit', $user) }}" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600">
@@ -109,7 +107,7 @@
 
 <!-- Back Button -->
 <div class="mt-6">
-    <a href="{{ route('dashboard') }}" class="text-blue-600 hover:text-blue-800 font-medium">
+    <a href="{{ route('dashboard') }}" class="text-gray-900 hover:text-gray-900 font-medium">
         ← Zurück zum Dashboard
     </a>
 </div>

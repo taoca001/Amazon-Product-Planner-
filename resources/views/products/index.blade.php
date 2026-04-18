@@ -3,12 +3,12 @@
 @section('title', 'Meine Produkte - Product Planner')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-3">
     <!-- Header with Create Button & Exports -->
-    <div class="flex justify-between items-center flex-wrap gap-4">
+    <div class="flex justify-between items-center flex-wrap gap-2">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900">📦 Meine Produkte</h1>
-            <p class="text-gray-600 mt-2">Verwalte deine Amazon-Produkte und Listings</p>
+            <h1 class="text-xl font-bold text-gray-900">📦 Meine Produkte</h1>
+            <p class="text-gray-600 text-sm">Verwalte deine Amazon-Produkte und Listings</p>
         </div>
         <div class="flex gap-3">
             @if ($products->count() > 0)
@@ -16,12 +16,12 @@
                 <a href="{{ route('products.export-all', 'csv') }}" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 font-medium text-sm" title="Alle Produkte als CSV exportieren">
                     📥 CSV
                 </a>
-                <a href="{{ route('products.export-all', 'json') }}" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium text-sm" title="Alle Produkte als JSON exportieren">
+                <a href="{{ route('products.export-all', 'json') }}" class="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 font-medium text-sm" title="Alle Produkte als JSON exportieren">
                     📥 JSON
                 </a>
             </div>
             @endif
-            <a href="{{ route('products.create') }}" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shadow-lg">
+            <a href="{{ route('products.create') }}" class="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium shadow-lg">
                 + Neues Produkt
             </a>
         </div>
@@ -54,7 +54,7 @@
                         <!-- Price -->
                         @if ($product->price)
                             <div class="flex items-baseline space-x-2">
-                                <span class="text-2xl font-bold text-blue-600">€{{ number_format($product->price, 2, ',', '.') }}</span>
+                                <span class="text-2xl font-bold text-gray-900">€{{ number_format($product->price, 2, ',', '.') }}</span>
                             </div>
                         @endif
 
@@ -68,7 +68,7 @@
                         @if ($product->keywords && count($product->keywords) > 0)
                             <div class="flex flex-wrap gap-1 pt-2">
                                 @foreach (array_slice($product->keywords, 0, 3) as $keyword)
-                                    <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                                    <span class="inline-block bg-gray-100 text-gray-900 px-2 py-1 rounded text-xs">
                                         {{ $keyword }}
                                     </span>
                                 @endforeach
@@ -92,7 +92,7 @@
 
                         <!-- Actions -->
                         <div class="flex gap-2 pt-4 border-t">
-                            <a href="{{ route('products.show', $product) }}" class="flex-1 text-center px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm font-medium">
+                            <a href="{{ route('products.show', $product) }}" class="flex-1 text-center px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-900 text-sm font-medium">
                                 Bearbeiten
                             </a>
                             <a href="{{ route('products.export', [$product, 'csv']) }}" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm font-medium" target="_blank" title="CSV exportieren">
@@ -119,7 +119,7 @@
             <div class="text-6xl mb-4">📦</div>
             <h2 class="text-2xl font-bold text-gray-900 mb-2">Keine Produkte vorhanden</h2>
             <p class="text-gray-600 mb-6">Erstelle dein erstes Produkt, um zu beginnen!</p>
-            <a href="{{ route('products.create') }}" class="inline-block px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+            <a href="{{ route('products.create') }}" class="inline-block px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium">
                 + Neues Produkt erstellen
             </a>
         </div>

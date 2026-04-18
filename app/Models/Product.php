@@ -17,8 +17,6 @@ class Product extends Model
         'notes',
         'amazon_listing',
         'shopify_listing',
-        'raw_images_path',
-        'product_images_path',
     ];
 
     protected $casts = [

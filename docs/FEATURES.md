@@ -287,13 +287,60 @@ Eingabefeld → [Delete Button]
 
 ---
 
-## 7️⃣ Export-Funktionalität (geplant)
+## 7️⃣ Export-Funktionalität
 
 ### Feature: CSV Export
-Ermöglicht Export von Produktlisting-Daten in CSV-Format zur Verwendung in externen Tools.
+Export von Produktlisting-Daten in CSV-Format (UTF-8 BOM für Excel-Kompatibilität).
+- Einzelprodukt- und Batch-Export
+- Streaming für große Datenmengen
+- Download-Links in Index- & Show-Views
 
 ### Feature: JSON Export
-Strukturierter Export für API-Integrationen und Backup.
+Strukturierter Export mit Image-Zähler für API-Integrationen und Backup.
+- Dateinamen mit Zeitstempel
+- Dropdown-Menü für Export-Optionen
+
+---
+
+## 8️⃣ Keyword-Automatisierung (n8n + SE Ranking)
+
+### Feature: Automatische Keyword-Generierung
+**Trigger:** Produkterstellung → n8n Webhook
+**Flow:** n8n → SE Ranking API → Keywords → PATCH /api/products/{id}/keywords
+
+**Keyword-Quellen:**
+- Export-Keywords (SE Ranking)
+- Ähnliche Keywords
+- Verwandte Keywords
+
+### Feature: Keywords-Tab
+**Location:** `resources/views/products/show.blade.php` (Tab 5)
+
+Anzeige aller generierten Keywords mit:
+- Übersichtliche Keyword-Liste
+- "Zu Amazon übertragen" Button
+- "Zu Shopify übertragen" Button
+- Transfer fügt Keywords zu den jeweiligen Listing-Feldern hinzu
+
+### Feature: REST-API für n8n
+**Routes:** `routes/api.php` (Bearer-Token-geschützt)
+- `GET /api/products` – Alle Produkte mit Keywords
+- `PATCH /api/products/{id}/keywords` – Keywords aktualisieren
+- `POST /api/products/{id}/images/upload` – Bild hochladen
+
+---
+
+## 9️⃣ Admin-Panel
+
+### Feature: Benutzerverwaltung
+**Route:** `GET /admin/users`
+**Controller:** `AdminController`
+
+Funktionen:
+- Benutzerübersicht (Name, E-Mail, Produkt-Anzahl)
+- Admin-Status vergeben/entziehen
+- Benutzer löschen
+- Admin-Middleware-Schutz (`is_admin` Flag)
 
 ---
 
@@ -319,4 +366,4 @@ Strukturierter Export für API-Integrationen und Backup.
 
 ---
 
-**Zuletzt aktualisiert:** 17. April 2026
+**Zuletzt aktualisiert:** 18. April 2026

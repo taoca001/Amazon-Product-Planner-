@@ -1,35 +1,35 @@
 # 🛒 Amazon Product Planner
 
-Eine umfassende Web-Anwendung für Amazon-Seller zum einfachen und übersichtlichen Planen und Verwalten von Produkten mit Bilder-Upload, Preischeck und Multi-Channel-Listing (Amazon & Shopify).
+Eine umfassende Web-Anwendung für Amazon-Seller zum Planen und Verwalten von Produkten mit Bilder-Upload, Keyword-Automatisierung und Multi-Channel-Listing (Amazon & Shopify).
 
 ## 📋 Überblick
 
-**Version:** 0.2.0 (In Entwicklung)  
-**Framework:** Laravel 13.5.0  
-**Datenbank:** PostgreSQL  
-**Frontend:** Blade Templates + Tailwind CSS v4  
-**Repository:** Git (initialized v0.2.0)
+**Version:** 0.3.0  
+**Framework:** Laravel 13 / PHP 8.3  
+**Datenbank:** SQLite  
+**Frontend:** Blade Templates + Tailwind CSS 3 + Alpine.js  
+**Automatisierung:** n8n + SE Ranking API
 
 ### Zielgruppe
 Amazon- und Shopify-Seller, die ihre Produktverwaltung professionalisieren möchten.
 
 ### Hauptziel
-Seller können **Produkte mit ihrem eigenen Profil erstellen**, Rohmaterial-Bilder und finale Produktbilder verwalten, sowie separate Listings für Amazon und Shopify pflegen und später exportieren.
+Seller können **Produkte mit ihrem eigenen Profil erstellen**, Rohmaterial-Bilder und finale Produktbilder verwalten, Keywords automatisch generieren lassen, sowie separate Listings für Amazon und Shopify pflegen und exportieren.
 
 ---
 
 ## 🚀 Quick Start
 
 ### Anforderungen
-- PHP 8.5+
-- PostgreSQL 13+
+- PHP 8.3+
 - Composer
-- Laravel 13.5
+- Node.js (optional, für Vite-Build)
+- n8n (optional, für Keyword-Automatisierung)
 
 ### Installation
 ```bash
 # Repository klonen
-git clone <repo-url>
+git clone https://github.com/taoca001/Amazon-Product-Planner-.git
 cd amazon-product-planner
 
 # Dependencies installieren
@@ -72,65 +72,107 @@ Passwort: password
 ## ✨ Hauptfunktionen
 
 ### 1. **Produktverwaltung** ✅
-- ✅ Produkt erstellen/bearbeiten/löschen
-- ✅ Basis-Informationen: Name, Beschreibung, Preis
-- ✅ Keywords & SEO-Metadaten
-- ✅ Interne Notizen
+- Produkt erstellen / bearbeiten / löschen
+- Basis-Informationen: Name, Beschreibung, Preis
+- Keywords & SEO-Metadaten
+- Interne Notizen
 
-### 2. **Bilder-Management** ✅
-- ✅ Drag-and-Drop Upload (Rohbilder & Produktbilder)
-- ✅ Zwei separate Galerien
-- ✅ Automatische Dateiverwaltung
-- ✅ Datei-Größe & Format-Validierung (bis 10MB)
+### 2. **Keyword-Automatisierung (n8n + SE Ranking)** ✅
+- Automatische Keyword-Generierung bei Produkterstellung
+- SE Ranking API: Export-Keywords, ähnliche und verwandte Keywords
+- Keywords-Tab mit Transfer zu Amazon & Shopify Listings
+- REST-API für n8n-Webhook-Integration
 
-### 3. **Amazon Listing** ✅
-- ✅ ASIN-Tracking
-- ✅ Titel, Beschreibung, Bullet Points (max 5)
-- ✅ Keywords & Kategorie
-- ✅ Status-Tracking (Entwurf → Bereit → Veröffentlicht)
-- ⏳ Sync mit echtem Amazon-Account (geplant)
+### 3. **Bilder-Management** ✅
+- Drag-and-Drop Upload (Rohbilder & Produktbilder)
+- Zwei separate Galerien
+- Automatische Dateiverwaltung
+- Datei-Größe & Format-Validierung (bis 10MB)
 
-### 4. **Shopify Listing** ✅
-- ✅ Produktinformationen (separat von Amazon)
-- ✅ Separate Preisgestaltung
-- ✅ SKU & Barcode-Tracking
-- ✅ Lagerbestandsverwaltung
-- ⏳ Sync mit echtem Shopify-Store (geplant)
+### 4. **Amazon Listing** ✅
+- ASIN-Tracking
+- Titel, Beschreibung, Bullet Points (max 5)
+- Keywords & Kategorie
+- Status-Tracking (Entwurf → Bereit → Veröffentlicht)
 
-### 5. **Export-Funktionalität** ⏹️
-- ⏹️ CSV/JSON Export für Amazon-Import
-- ⏹️ CSV/JSON Export für Shopify-Import
-- ⏹️ Batch-Exporte mehrerer Produkte
+### 5. **Shopify Listing** ✅
+- Separate Produktinformationen & Preisgestaltung
+- SKU & Barcode-Tracking
+- Tags & Lagerbestandsverwaltung
 
-### 6. **Authentifizierung & Autorisierung** ✅
-- ✅ Email/Passwort Login (Laravel Breeze)
-- ✅ Benutzerregistrierung
-- ✅ Produkt-Ownership-Validierung (Policy-basiert)
+### 6. **Export-Funktionalität** ✅
+- CSV-Export (Einzel & Batch, UTF-8 BOM für Excel)
+- JSON-Export (strukturiert mit Image-Zähler)
+- Download-Links in Index- & Show-Views
+
+### 7. **Admin-Panel** ✅
+- Benutzerverwaltung (CRUD)
+- Admin-Middleware-Schutz
+- Admin-Flag pro Benutzer
+
+### 8. **Authentifizierung & Autorisierung** ✅
+- Laravel Breeze (Email/Passwort)
+- Policy-basierte Autorisierung (Owner + Admin)
+- API-Token-Auth für n8n-Webhooks
+- Rate Limiting auf Login
+
+---
+
+## 🔗 API (für n8n / Automatisierung)
+
+Alle API-Endpoints sind via Bearer-Token geschützt (Middleware `api.token`).
+
+| Methode | Endpoint | Beschreibung |
+|---------|----------|-------------|
+| `GET` | `/api/products` | Alle Produkte mit Keywords |
+| `PATCH` | `/api/products/{id}/keywords` | Keywords aktualisieren |
+| `POST` | `/api/products/{id}/images/upload` | Bild hochladen |
+
+```bash
+curl -H "Authorization: Bearer pplan_..." http://localhost:8000/api/products
+```
 
 ---
 
 ## 🔐 Sicherheit
 
-- ✅ CSRF-Protection auf allen POST-Requests
-- ✅ SQL-Injection-Schutz durch Eloquent ORM
-- ✅ File-Upload Validierung (MIME-Type, Größe)
-- ✅ Policy-basierte Autorisierung
-- ✅ Password-Hashing mit bcrypt
+- CSRF-Protection auf allen Formularen
+- SQL-Injection-Schutz durch Eloquent ORM
+- File-Upload-Validierung (MIME-Type, Größe)
+- Policy-basierte Autorisierung (Owner + Admin)
+- Password-Hashing mit bcrypt
+- API-Token-Middleware für externe Zugriffe
 
 ---
 
-## 🚦 Status (Phase 1)
+## 🏗️ Tech-Stack
 
-| Feature | Status | Beschreibung |
-|---------|--------|-------------|
-| Produktverwaltung | ✅ | Vollständig implementiert |
-| Bilder-Upload | ✅ | Drag-and-Drop funktioniert |
-| Amazon Listing | ✅ | Formular integriert |
-| Shopify Listing | ✅ | Formular integriert |
-| Authentication | ✅ | Laravel Breeze installiert |
-| Export | ⏹️ | Geplant für Phase 2 |
-| Amazon API | ⏹️ | Geplant für Phase 2 |
-| Shopify API | ⏹️ | Geplant für Phase 2 |
+| Komponente | Technologie |
+|-----------|-------------|
+| Backend | Laravel 13, PHP 8.3 |
+| Datenbank | SQLite (dev) / MySQL (prod-ready) |
+| Frontend | Blade, Tailwind CSS 3, Alpine.js |
+| Automatisierung | n8n 2.8.3 (Docker) |
+| Keyword-API | SE Ranking |
+| Auth | Laravel Breeze, API-Tokens |
+| Storage | Public Disk (lokaler Speicher) |
+
+---
+
+## 🚦 Status
+
+| Feature | Status |
+|---------|--------|
+| Produktverwaltung (CRUD) | ✅ |
+| Bilder-Upload (Drag & Drop) | ✅ |
+| Amazon Listing | ✅ |
+| Shopify Listing | ✅ |
+| CSV/JSON Export | ✅ |
+| Admin-Panel | ✅ |
+| Keyword-Automatisierung (n8n) | ✅ |
+| API-Token-Auth | ✅ |
+| Amazon API Sync | ⏳ Geplant |
+| Shopify API Sync | ⏳ Geplant |
 
 ---
 
@@ -138,4 +180,4 @@ Passwort: password
 
 Dieses Projekt ist privat.
 
-**Zuletzt aktualisiert:** 17. April 2026 — Phase 1 (Listing Management) ✅
+**Zuletzt aktualisiert:** 18. April 2026 — v0.3.0

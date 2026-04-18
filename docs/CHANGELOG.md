@@ -4,6 +4,53 @@ Alle Änderungen, Verbesserungen und Bugfixes werden hier dokumentiert.
 
 ---
 
+## [0.3.0] - 18. April 2026 - Keyword-Automatisierung & Code-Qualität 🚀
+
+### ✅ Neue Features (Phase 3)
+
+#### Keyword-Automatisierung (n8n + SE Ranking)
+- ✅ n8n Workflow-Integration für automatische Keyword-Generierung
+- ✅ SE Ranking API: Export-, ähnliche und verwandte Keywords
+- ✅ Keywords-Tab in Produktansicht (Tab 5)
+- ✅ Keyword-Transfer zu Amazon & Shopify Listings
+- ✅ REST-API für n8n-Webhooks (`routes/api.php`)
+
+#### API-Token-Authentifizierung
+- ✅ `ApiToken` Model & Migration
+- ✅ `AuthenticateApiToken` Middleware (Bearer-Token)
+- ✅ API-Endpoints: GET /api/products, PATCH keywords, POST images/upload
+- ✅ Middleware-Alias `api.token` in bootstrap/app.php
+
+#### Admin-Panel
+- ✅ Benutzerverwaltung (CRUD)
+- ✅ Admin-Middleware-Schutz (`is_admin` Flag)
+- ✅ Admin-View: `admin/users/index.blade.php`
+
+#### UI/UX Verbesserungen
+- ✅ Farbschema von Blau auf Schwarz/Grau umgestellt
+- ✅ Navigation-Spacing-Bug behoben (extra `</div>`)
+- ✅ Konsolidierter `<head>` Partial (`layouts/partials/head.blade.php`)
+
+### 🔧 Code-Qualität & Best Practices
+- ✅ `ProductPolicy`: `view/update/delete` prüft jetzt `$user->is_admin`
+- ✅ `ProductController`: Manuelle Auth-Checks → `$this->authorize()`
+- ✅ `ProductController`: `edit()` entfernt (identisch mit `show()`)
+- ✅ `ProductController`: `exportJSON` + `exportJSONMultiple` → einzelne `exportJSON($products)`
+- ✅ `routes/web.php`: `Route::resource(...)->except(['edit'])`
+- ✅ API-Controller: Inline-Auth entfernt, nutzt `api.token` Middleware
+- ✅ `Product.php`: `raw_images_path`, `product_images_path` aus `$fillable` entfernt
+- ✅ Keyword-JavaScript dedupliziert → `layouts/partials/keyword-js.blade.php`
+- ✅ `show.blade.php`: `switchTab()` Funktion extrahiert
+- ✅ `console.php`: Standard `inspire`-Command entfernt
+
+### 🐛 Bugs Fixed
+- ✅ n8n SE Ranking 401/400 Auth-Fehler behoben
+- ✅ n8n Merge-Node Konfiguration korrigiert
+- ✅ Laravel API 404 (api.php Route-Registration in bootstrap/app.php)
+- ✅ Navigation-Spacing-Bug (785px Lücke durch extra `</div>`)
+
+---
+
 ## [0.2.0] - 17. April 2026 - Export-Funktionalität 🚀
 
 ### ✅ Neue Features (Phase 2 - Export & Analytics)
@@ -88,8 +135,8 @@ Alle Änderungen, Verbesserungen und Bugfixes werden hier dokumentiert.
 - ✅ Form Validation Fehler-Anzeige
 
 #### Backend
-- ✅ Laravel 13.5.0 Setup
-- ✅ PostgreSQL Integration
+- ✅ Laravel 13 / PHP 8.3 Setup
+- ✅ SQLite Integration
 - ✅ Eloquent ORM mit Relationships
 - ✅ JSON Field Casting
 - ✅ File Upload mit Validierung
@@ -119,20 +166,26 @@ Alle Änderungen, Verbesserungen und Bugfixes werden hier dokumentiert.
 - `create_product_images_table` - Bilder mit Type-Unterscheidung
 
 **Models:**
-- `User` - Auth-Benutzer mit hasMany Products
+- `User` - Auth-Benutzer mit hasMany Products, is_admin Flag
 - `Product` - Hauptprodukt mit JSON Listings
 - `ProductImage` - Bilder mit Type (raw/product)
+- `ApiToken` - API-Tokens für externe Zugriffe
 
 **Controllers:**
-- `ProductController` - CRUD Operations
+- `ProductController` - CRUD + Export Operations
 - `ProductImageController` - Image Upload/Delete
+- `Api\ProductKeywordController` - Keyword-API
+- `Api\ProductImageUploadController` - Bild-Upload-API
+- `AdminController` - Admin Panel
+- `DashboardController` - Dashboard
 
 **Policies:**
 - `ProductPolicy` - Authorization Checks
 
 **Routes:**
-- Alle als REST-Resources (web.php)
-- 11 Endpoints für Products & Images
+- Web-Routes als REST-Resources (web.php)
+- API-Routes mit Bearer-Token-Auth (api.php)
+- Admin-Routes mit is_admin Middleware
 
 ---
 
@@ -175,9 +228,9 @@ Alle Änderungen, Verbesserungen und Bugfixes werden hier dokumentiert.
 ## ⏹️ Geplante Features (Phase 2)
 
 ### Export-Funktionalität
-- [ ] CSV Export (Produkte)
-- [ ] JSON Export (Listings)
-- [ ] Batch-Exporte
+- [✅] CSV Export (Produkte)
+- [✅] JSON Export (Listings)
+- [✅] Batch-Exporte
 - [ ] Export-Templates
 
 ### API-Integrationen
@@ -188,7 +241,7 @@ Alle Änderungen, Verbesserungen und Bugfixes werden hier dokumentiert.
 
 ### Erweiterte Features
 - [ ] Preischeck & Monitoring
-- [ ] Keyword-Recherche
+- [✅] Keyword-Recherche (SE Ranking)
 - [ ] Bilder-Editor
 - [ ] Bulk-Operations
 - [ ] Produktkopie/Duplikation
@@ -202,8 +255,8 @@ Alle Änderungen, Verbesserungen und Bugfixes werden hier dokumentiert.
 - [ ] Search & Filtering
 - [ ] Lazy Loading
 
-### Admin Panel (optional)
-- [ ] User Management
+### Admin Panel
+- [✅] User Management
 - [ ] System Settings
 - [ ] Audit Logs
 - [ ] Analytics
@@ -214,11 +267,12 @@ Alle Änderungen, Verbesserungen und Bugfixes werden hier dokumentiert.
 
 **Format:** Semantic Versioning (MAJOR.MINOR.PATCH)
 
-**Aktuelle Version:** 0.1.0 (Alpha - In Development)
+**Aktuelle Version:** 0.3.0 (Alpha - In Development)
 
 **Meilensteine:**
 - 0.1.0 → Phase 1: Listing Management ✅
-- 0.2.0 → Phase 2: Export & APIs
+- 0.2.0 → Phase 2: Export & Dashboard ✅
+- 0.3.0 → Phase 3: Keyword-Automatisierung & Code-Qualität ✅
 - 1.0.0 → Production Release
 
 ---
@@ -260,33 +314,24 @@ Alle Änderungen, Verbesserungen und Bugfixes werden hier dokumentiert.
 
 ## 🎯 Nächste Schritte
 
-### Kurzfristig (Diese Woche)
-1. [ ] Teste Form-Submission (Amazon & Shopify Listings)
-2. [ ] Implementiere Export-Funktionalität (CSV/JSON)
-3. [ ] Erstelle Batch-Upload für Bilder
-4. [ ] Implementiere Produktsuche
+### Kurzfristig
+1. [ ] Amazon MWS / SP-API Integration
+2. [ ] Shopify REST/GraphQL API Integration
+3. [ ] Preischeck & Monitoring
+4. [ ] Produktsuche & Filterung
 
-### Mittelfristig (Nächste 2-4 Wochen)
-1. [ ] Amazon API Integration
-2. [ ] Shopify API Integration
-3. [ ] Preischeck-Feature
-4. [ ] Admin-Panel
-
-### Langfristig (Nach Production Release)
+### Mittelfristig
 1. [ ] Analytics & Reports
-2. [ ] Team-Collaboration Features
-3. [ ] Mobile App
-4. [ ] Cloud Sync
+2. [ ] Bulk-Operations
+3. [ ] Produktkopie/Duplikation
+4. [ ] Notifications & Alerts
+
+### Langfristig
+1. [ ] Team-Collaboration Features
+2. [ ] Mobile App
+3. [ ] Cloud Sync
 
 ---
 
-## 📞 Kontakt & Support
-
-- **Entwickler:** AI Assistant (GitHub Copilot)
-- **Projekt-Repo:** [URL TBD]
-- **Issues:** Bitte dokumentieren und in Git einträgen
-
----
-
-**Stand:** 17. April 2026 09:05 UTC  
-**Status:** 🟢 Phase 1 Active Development
+**Stand:** 18. April 2026
+**Status:** 🟢 Phase 3 Active Development

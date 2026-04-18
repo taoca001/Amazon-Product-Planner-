@@ -1,21 +1,7 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-
-        <title>@yield('title', config('app.name'))</title>
-
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Tailwind CSS CDN -->
-        <script src="https://cdn.tailwindcss.com"></script>
-
-        <!-- Alpine.js -->
-        <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        @include('layouts.partials.head')
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen flex flex-col">
@@ -24,7 +10,7 @@
 
             <!-- Page Content -->
             <main class="flex-1">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-0 pb-6">
                     @yield('content')
                 </div>
             </main>
@@ -60,13 +46,13 @@
                     // Highlight drop zone when item is dragged over it
                     ['dragenter', 'dragover'].forEach(eventName => {
                         zone.addEventListener(eventName, () => {
-                            zone.classList.add('border-blue-500', 'bg-blue-50');
+                            zone.classList.add('border-gray-900', 'bg-gray-50');
                         }, false);
                     });
 
                     ['dragleave', 'drop'].forEach(eventName => {
                         zone.addEventListener(eventName, () => {
-                            zone.classList.remove('border-blue-500', 'bg-blue-50');
+                            zone.classList.remove('border-gray-900', 'bg-gray-50');
                         }, false);
                     });
 

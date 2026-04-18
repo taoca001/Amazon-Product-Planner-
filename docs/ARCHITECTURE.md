@@ -11,8 +11,10 @@ Technische Übersicht der Applikation: Datenbankschema, Modell-Beziehungen und A
 │           USERS                     │
 ├─────────────────────────────────────┤
 │ PK  id                              │
+│     name                            │
 │     email (UNIQUE)                  │
 │     password (hashed)               │
+│     is_admin (BOOLEAN, default 0)   │
 │     created_at                      │
 │     updated_at                      │
 └────────────┬────────────────────────┘
@@ -31,8 +33,6 @@ Technische Übersicht der Applikation: Datenbankschema, Modell-Beziehungen und A
 │     notes                          (TEXT, nullable)        │
 │     amazon_listing                 (JSON object)           │
 │     shopify_listing                (JSON object)           │
-│     raw_images_path                (VARCHAR, nullable)     │
-│     product_images_path            (VARCHAR, nullable)     │
 │     amazon_synced_at               (TIMESTAMP, nullable)   │
 │     shopify_synced_at              (TIMESTAMP, nullable)   │
 │     exported_at                    (TIMESTAMP, nullable)   │
@@ -55,6 +55,17 @@ Technische Übersicht der Applikation: Datenbankschema, Modell-Beziehungen und A
 │     file_size            (BIGINT)    │
 │     mime_type            (VARCHAR)   │
 │     order                 (INT)       │
+│     created_at                       │
+│     updated_at                       │
+└──────────────────────────────────────┘
+
+┌──────────────────────────────────────┐
+│      API_TOKENS                      │
+├──────────────────────────────────────┤
+│ PK  id                               │
+│     name          (VARCHAR)          │
+│     token         (VARCHAR, UNIQUE)  │
+│     last_used_at  (TIMESTAMP, null)   │
 │     created_at                       │
 │     updated_at                       │
 └──────────────────────────────────────┘
@@ -108,6 +119,14 @@ class ProductImage extends Model {
 }
 ```
 
+### ApiToken Model
+```php
+class ApiToken extends Model {
+    // Token für externe API-Zugriffe (n8n, etc.)
+    // Felder: name, token (unique), last_used_at
+}
+```
+
 ---
 
 ## 📁 Ordnerstruktur
@@ -117,63 +136,62 @@ amazon-product-planner/
 ├── app/
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── ProductController.php       (REST CRUD)
+│   │   │   ├── ProductController.php       (REST CRUD + Export)
 │   │   │   ├── ProductImageController.php  (Upload/Delete)
-│   │   │   └── AuthController.php          (Login/Register)
-│   │   ├── Middleware/
-│   │   │   └── Authenticate.php
-│   │   └── Requests/                       (Form Validation)
+│   │   │   ├── DashboardController.php     (Dashboard)
+│   │   │   ├── AdminController.php         (Admin Panel)
+│   │   │   └── Api/
+│   │   │       ├── ProductKeywordController.php   (Keyword-API)
+│   │   │       └── ProductImageUploadController.php (Bild-Upload-API)
+│   │   └── Middleware/
+│   │       └── AuthenticateApiToken.php   (Bearer-Token-Auth)
 │   │
 │   ├── Models/
-│   │   ├── User.php                        (Auth User)
+│   │   ├── User.php                        (Auth-Benutzer)
 │   │   ├── Product.php                     (Hauptmodell)
-│   │   └── ProductImage.php                (Bilder)
+│   │   ├── ProductImage.php                (Bilder)
+│   │   └── ApiToken.php                    (API-Tokens)
 │   │
 │   ├── Policies/
-│   │   └── ProductPolicy.php               (Authorization)
+│   │   └── ProductPolicy.php               (Owner + Admin)
 │   │
-│   ├── Exceptions/
-│   └── Traits/
-│
-├── config/
-│   ├── app.php
-│   ├── auth.php
-│   ├── database.php
-│   └── filesystems.php
-│
-├── database/
-│   ├── migrations/
-│   │   ├── create_products_table.php
-│   │   └── create_product_images_table.php
-│   ├── seeders/
-│   │   └── ProductSeeder.php
-│   └── factories/
+│   └── Services/
+│       └── SeRankingService.php            (SE Ranking API)
 │
 ├── routes/
-│   └── web.php                             (Route Definitionen)
+│   ├── web.php                             (Web-Routes)
+│   └── api.php                             (API-Routes, Bearer-Token)
 │
 ├── resources/
-│   ├── views/
-│   │   ├── layouts/
-│   │   │   └── base.blade.php              (Master Layout)
-│   │   ├── products/
-│   │   │   ├── index.blade.php             (Produktliste)
-│   │   │   ├── create.blade.php            (Neues Produkt)
-│   │   │   ├── show.blade.php              (Bearbeiten/Detail)
-│   │   │   └── sections/
-│   │   │       ├── amazon-listing.blade.php
-│   │   │       └── shopify-listing.blade.php
-│   │   ├── auth/
-│   │   │   ├── login.blade.php
-│   │   │   ├── register.blade.php
-│   │   │   └── reset-password.blade.php
-│   │   └── dashboard.blade.php
-│   │
-│   ├── css/
-│   │   └── app.css
-│   │
-│   └── js/
-│       └── app.js
+│   └── views/
+│       ├── layouts/
+│       │   ├── app.blade.php               (Auth Layout)
+│       │   ├── base.blade.php              (Produkt Layout)
+│       │   ├── guest.blade.php             (Guest Layout)
+│       │   ├── navigation.blade.php        (Nav-Partial)
+│       │   └── partials/
+│       │       ├── head.blade.php          (Konsolidierter Head)
+│       │       └── keyword-js.blade.php    (Keyword-JavaScript)
+│       ├── products/
+│       │   ├── index.blade.php             (Produktliste)
+│       │   ├── create.blade.php            (Neues Produkt)
+│       │   ├── show.blade.php              (Detail + Tabs)
+│       │   └── sections/
+│       │       └── amazon-listing.blade.php
+│       ├── admin/
+│       │   └── users/
+│       │       └── index.blade.php         (Benutzerverwaltung)
+│       └── dashboard.blade.php
+│
+├── database/
+│   └── migrations/
+│       ├── create_products_table.php
+│       ├── create_product_images_table.php
+│       └── create_api_tokens_table.php
+│
+├── n8n_google_drive_to_product_image_upload.json  (n8n Workflow)
+└── docs/
+```
 │
 ├── storage/
 │   ├── app/
@@ -221,63 +239,46 @@ amazon-product-planner/
 
 ---
 
-## 🔄 Request Flow (MVC)
+## 🔄 Request Flow
 
+### Web-Request (MVC)
 ```
-┌─────────────────────────────────────────────────────┐
-│  1. HTTP Request (GET/POST/PUT/DELETE)              │
-│     Browser → routes/web.php                        │
-└─────────────────────┬───────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────┐
-│  2. Routing & Middleware                            │
-│     - CSRF Protection (web.php middleware)          │
-│     - Authentication Check                          │
-│     - Session Handler                               │
-└─────────────────────┬───────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────┐
-│  3. Controller Action (ProductController.php)       │
-│     - Authorization Check (ProductPolicy)           │
-│     - Validation (Request::validate)                │
-│     - Database Query (Eloquent ORM)                 │
-└─────────────────────┬───────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────┐
-│  4. Model Interaction (Product.php)                 │
-│     - Database Transaction                          │
-│     - JSON Casting (amazon_listing, keywords)       │
-│     - Relationships (rawImages(), productImages())  │
-└─────────────────────┬───────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────┐
-│  5. View Rendering (Blade Template)                 │
-│     - resources/views/products/show.blade.php       │
-│     - Partial includes (amazon-listing.blade.php)   │
-└─────────────────────┬───────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────┐
-│  6. HTTP Response                                   │
-│     Browser ← HTML/Redirect                         │
-└─────────────────────────────────────────────────────┘
+Browser → routes/web.php → Middleware (CSRF, Auth)
+  → Controller → $this->authorize() (Policy)
+  → Eloquent ORM → Blade View → HTML Response
+```
+
+### API-Request (n8n / externe Systeme)
+```
+n8n Webhook → routes/api.php → Middleware (api.token)
+  → AuthenticateApiToken (Bearer-Token-Prüfung)
+  → Api\Controller → JSON Response
 ```
 
 ---
 
 ## 🔐 Authorization & Policy
 
-Basiert auf Laravel's Policy-System:
+Basiert auf Laravel's Policy-System mit Owner + Admin Check:
 
 ```php
 // In ProductPolicy.php:
 public function update(User $user, Product $product): bool {
-    return $user->id === $product->user_id;
+    return $user->is_admin || $user->id === $product->user_id;
 }
 
-// In Controller:
-if (auth()->user()->id !== $product->user_id) {
-    abort(403, 'Unauthorized');
-}
+// In Controller ($this->authorize statt manueller Check):
+$this->authorize('update', $product);
+```
+
+### API-Authentifizierung
+
+Externe Systeme (n8n) authentifizieren sich via Bearer-Token:
+
+```php
+// AuthenticateApiToken Middleware
+// Header: Authorization: Bearer pplan_...
+// Token wird gegen api_tokens-Tabelle geprüft
 ```
 
 ---
@@ -386,8 +387,8 @@ if (auth()->user()->id !== $product->user_id) {
 3. **Authorization:** Policy-basierte Checks
 4. **File Validation:** MIME-Type & Size Checks
 5. **Password:** Bcrypt Hashing
-6. **Sessions:** Laravel Session Handler
+6. **API Token:** Bearer-Token-Middleware für externe API-Zugriffe
 
 ---
 
-**Zuletzt aktualisiert:** 17. April 2026
+**Zuletzt aktualisiert:** 18. April 2026

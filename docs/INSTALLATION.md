@@ -4,17 +4,18 @@ Vollständige Anleitung zum Aufsetzen des Amazon Product Planners in Ihrer lokal
 
 ## 📋 Anforderungen
 
-- **PHP:** 8.5 oder höher
-- **Datenbank:** PostgreSQL 13+
+- **PHP:** 8.3 oder höher
+- **Datenbank:** SQLite (Standard) oder MySQL/PostgreSQL
 - **Package Manager:** Composer 2.0+
-- **Node.js:** 18+ (optional, für npm-Skripte)
+- **Node.js:** 18+ (optional, für Vite-Build)
 - **Git:** Zum Klonen des Repositories
+- **n8n:** 2.8+ (optional, für Keyword-Automatisierung via Docker)
 
 ### System-Check
 ```bash
-php -v          # PHP-Version überprüfen
+php -v          # PHP-Version überprüfen (≥ 8.3)
 composer -v     # Composer-Version überprüfen
-psql --version  # PostgreSQL-Version überprüfen
+sqlite3 --version  # SQLite-Version überprüfen
 ```
 
 ---
@@ -44,15 +45,22 @@ APP_ENV=local
 APP_DEBUG=true
 APP_URL=http://localhost:8000
 
-# Datenbank
-DB_CONNECTION=pgsql
-DB_HOST=127.0.0.1
-DB_PORT=5432
-DB_DATABASE=amazon_product_planner
-DB_USERNAME=postgres
-DB_PASSWORD=your_password
+# Datenbank (SQLite Standard)
+DB_CONNECTION=sqlite
+# DB_DATABASE wird automatisch auf database/database.sqlite gesetzt
 
-# Mail (optional für Authentifizierung)
+# Für MySQL/PostgreSQL stattdessen:
+# DB_CONNECTION=mysql
+# DB_HOST=127.0.0.1
+# DB_PORT=3306
+# DB_DATABASE=amazon_product_planner
+# DB_USERNAME=root
+# DB_PASSWORD=your_password
+
+# SE Ranking API (optional, für Keyword-Automatisierung)
+SE_RANKING_API_KEY=your_se_ranking_api_key
+
+# Mail (optional)
 MAIL_MAILER=log
 ```
 
@@ -63,12 +71,8 @@ php artisan key:generate
 
 ### 5. Datenbank erstellen
 ```bash
-# PostgreSQL Connection starten
-psql -U postgres
-
-# In psql:
-CREATE DATABASE amazon_product_planner;
-\q
+# SQLite-Datei wird automatisch erstellt
+touch database/database.sqlite
 ```
 
 ### 6. Migrations ausführen
@@ -162,7 +166,8 @@ chmod -R 775 public/storage
 | `database/migrations` | Datenbank-Migrationen |
 | `database/seeders` | Test-Daten Seeder |
 | `resources/views` | Blade Templates |
-| `routes/web.php` | Route-Definitionen |
+| `routes/web.php` | Web-Route-Definitionen |
+| `routes/api.php` | API-Route-Definitionen (Bearer-Token-Auth) |
 | `storage/app/public` | Hochgeladene Dateien |
 | `storage/logs` | Laravel Logs |
 | `public/storage` | Öffentlicher Symlink zu storage/app/public |
@@ -240,4 +245,19 @@ php artisan view:cache
 
 ---
 
-**Zuletzt aktualisiert:** 17. April 2026
+## 🔗 n8n Setup (optional)
+
+Für automatische Keyword-Generierung:
+
+```bash
+# n8n via Docker starten
+docker run -d --name n8n -p 5678:5678 n8nio/n8n
+
+# n8n öffnen: http://localhost:5678
+```
+
+In n8n den Workflow `n8n_google_drive_to_product_image_upload.json` importieren und konfigurieren.
+
+---
+
+**Zuletzt aktualisiert:** 18. April 2026

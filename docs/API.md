@@ -7,27 +7,94 @@ REST API Referenz für den Amazon Product Planner.
 ## 📍 Base URL
 
 ```
-http://localhost:8000/api
+Web:  http://localhost:8000
+API:  http://localhost:8000/api
 ```
-
-(Aktuell REST-Routes in web.php; bei Skalierung zu separater API)
 
 ---
 
 ## 🔐 Authentifizierung
 
-Alle Requests müssen authentifiziert sein (außer Login/Register):
+### Web-Requests
+Session-basiert via Cookies (CSRF-Token erforderlich).
 
-```
-GET /products
-Authorization: Bearer {session_cookie}
+### API-Requests (für n8n / externe Systeme)
+Alle API-Endpoints (`/api/*`) erfordern einen Bearer-Token:
+
+```bash
+curl -H "Authorization: Bearer pplan_..." http://localhost:8000/api/products
 ```
 
-Session wird automatisch über Cookies verwaltet.
+Tokens werden in der `api_tokens`-Tabelle gespeichert und via `AuthenticateApiToken`-Middleware geprüft.
 
 ---
 
-## 📌 Products Endpoints
+## 🔗 API Endpoints (Bearer-Token-Auth)
+
+### GET /api/products
+**Beschreibung:** Alle Produkte mit Keywords abrufen
+**Authentifizierung:** Bearer-Token
+
+**Response (200):**
+```json
+[
+  {
+    "id": 1,
+    "name": "Wireless Kopfhörer Pro",
+    "keywords": ["wireless", "headphones"],
+    "amazon_listing": {...},
+    "shopify_listing": {...}
+  }
+]
+```
+
+---
+
+### PATCH /api/products/{id}/keywords
+**Beschreibung:** Keywords eines Produkts aktualisieren (z.B. von n8n nach SE Ranking Abfrage)
+**Authentifizierung:** Bearer-Token
+
+**Request Body (JSON):**
+```json
+{
+  "keywords": ["wireless headphones", "bluetooth audio", "noise cancellation"]
+}
+```
+
+**Response (200):**
+```json
+{
+  "message": "Keywords updated",
+  "product": {...}
+}
+```
+
+---
+
+### POST /api/products/{id}/images/upload
+**Beschreibung:** Produktbild hochladen (z.B. von n8n nach Google Drive Download)
+**Authentifizierung:** Bearer-Token
+**Content-Type:** multipart/form-data
+
+**Form Data:**
+- `image` (required): Bilddatei
+- `type` (optional): `raw` | `product` (default: `product`)
+
+**Response (200):**
+```json
+{
+  "message": "Image uploaded",
+  "image": {
+    "id": 5,
+    "file_name": "photo.jpg",
+    "url": "/storage/products/1/product/photo.jpg"
+  }
+}
+```
+
+---
+
+## 📌 Web-Endpoints (Session/Cookie-Auth)
 
 ### GET /products
 **Beschreibung:** Alle Produkte des aktuellen Benutzers abrufen  
@@ -397,7 +464,9 @@ curl -X POST http://localhost:8000/products/1/images \
 ## 🔐 CORS (Cross-Origin Resource Sharing)
 
 Aktuell: **Nicht aktiviert** (für Frontend-Integration geplant)
+---
 
+**Zuletzt aktualisiert:** 18. April 2026
 Future:
 ```php
 // config/cors.php

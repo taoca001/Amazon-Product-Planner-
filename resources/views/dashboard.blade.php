@@ -5,12 +5,12 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
+    <div class="py-2">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <!-- Welcome Banner -->
-            <div class="mb-8 bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg shadow-lg p-8 text-white">
+            <div class="mb-8 bg-gradient-to-r from-gray-900 to-gray-700 rounded-lg shadow-lg p-8 text-white">
                 <h1 class="text-3xl font-bold mb-2">Willkommen, {{ Auth::user()->name }}! 👋</h1>
-                <p class="text-blue-100">Verwalte deine Amazon und Shopify Produkte an einem Ort</p>
+                <p class="text-gray-300">Verwalte deine Amazon und Shopify Produkte an einem Ort</p>
             </div>
 
             <!-- Stats Row -->
@@ -22,13 +22,13 @@
                 @endphp
 
                 <!-- Total Products Card -->
-                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+                <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-gray-900">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-600 text-sm font-medium">Gesamt Produkte</p>
                             <p class="text-3xl font-bold text-gray-900">{{ $totalProducts }}</p>
                         </div>
-                        <div class="text-4xl text-blue-500">📦</div>
+                        <div class="text-4xl text-gray-700">📦</div>
                     </div>
                 </div>
 
@@ -59,7 +59,7 @@
             <div class="mb-8 bg-white rounded-lg shadow-md p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">🚀 Quick Actions</h2>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <a href="{{ route('products.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg text-center transition">
+                    <a href="{{ route('products.create') }}" class="bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg text-center transition">
                         + Neues Produkt erstellen
                     </a>
                     <a href="{{ route('products.index') }}" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-lg text-center transition">
@@ -94,7 +94,7 @@
                                 @if($product->shopify_listing)
                                     <span class="text-green-500 text-lg">🌿</span>
                                 @endif
-                                <a href="{{ route('products.show', $product) }}" class="text-blue-600 hover:text-blue-800 font-medium">
+                                <a href="{{ route('products.show', $product) }}" class="text-gray-900 hover:text-gray-900 font-medium">
                                     Bearbeiten →
                                 </a>
                             </div>
@@ -108,7 +108,7 @@
                 <p class="text-2xl text-gray-400 mb-4">📦</p>
                 <h3 class="text-lg font-semibold text-gray-700 mb-2">Keine Produkte vorhanden</h3>
                 <p class="text-gray-600 mb-6">Erstelle dein erstes Produkt um zu beginnen</p>
-                <a href="{{ route('products.create') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition">
+                <a href="{{ route('products.create') }}" class="inline-block bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-8 rounded-lg transition">
                     + Produkt erstellen
                 </a>
             </div>

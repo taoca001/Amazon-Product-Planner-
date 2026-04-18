@@ -1,0 +1,197 @@
+{
+  "name": "Amazon Product Planner \u2013 Keyword-Analyse bei neuem Produkt",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "product-created",
+        "options": {}
+      },
+      "id": "trigger-webhook",
+      "name": "Webhook: Neues Produkt angelegt",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300],
+      "webhookId": "product-created"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\nconst productName = body.name || '';\n\nlet keywords;\nif (Array.isArray(body.keywords) && body.keywords.length > 0) {\n  keywords = body.keywords;\n} else {\n  const stopwords = new Set(['in','mit','und','oder','f\u00fcr','von','an','auf','bei','aus','nach','zu','zum','zur','der','die','das','ein','eine','einen','einem','einer','des','den','dem','als','am','im','ist','sind','wird','werden','haben','hat','ich','sie','er','es','wir','ihr','sich','nicht','auch','wenn','dann','so','wie','aber','noch','nur','kann','mehr','alle','viele','verschiedenen','personalisierter','personalisierte','personalisiertem','personalisierten']);\n  const words = productName.toLowerCase().split(/\\s+/).filter(w => w.length > 3 && !stopwords.has(w));\n  const seeds = [];\n  if (words.length >= 2) seeds.push(words.slice(0, 2).join(' '));\n  if (words.length >= 3) seeds.push(words.slice(0, 3).join(' '));\n  if (words.length >= 1) seeds.push(words[0]);\n  keywords = [...new Set(seeds)].slice(0, 3);\n  if (keywords.length === 0) keywords = [productName.split(' ').slice(0, 3).join(' ')];\n}\n\nreturn [{ json: { product_id: body.product_id, name: keywords[0], keywords: keywords } }];"
+      },
+      "id": "prepare-keywords",
+      "name": "Keywords vorbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [280, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.seranking.com/v1/keywords/export?source=de",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ keywords: $json.keywords, cols: 'keyword,volume,cpc,competition,difficulty', sort: 'volume', sort_order: 'desc' }) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "SE Ranking API"
+        }
+      },
+      "id": "seranking-export",
+      "name": "SE Ranking: Bestehende Keywords bewerten",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [480, 160]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.seranking.com/v1/keywords/similar?source=de&keyword={{ encodeURIComponent($json.name) }}&limit=20&sort=volume&sort_order=desc",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "SE Ranking API"
+        }
+      },
+      "id": "seranking-similar",
+      "name": "SE Ranking: \u00c4hnliche Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.seranking.com/v1/keywords/related?source=de&keyword={{ encodeURIComponent($json.name) }}&limit=20&sort=volume&sort_order=desc",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "SE Ranking API"
+        }
+      },
+      "id": "seranking-related",
+      "name": "SE Ranking: Verwandte Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [480, 440]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "merge-1",
+      "name": "Merge 1: Export + \u00c4hnliche",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [700, 230]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "merge-2",
+      "name": "Merge 2: + Verwandte",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [880, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nlet allKeywords = [];\n\nfor (const item of items) {\n  const d = item.json;\n  // Export-Ergebnis: Array mit {keyword, volume, ...}\n  if (Array.isArray(d) && d[0] && d[0].keyword !== undefined) {\n    d.forEach(kw => {\n      allKeywords.push({ keyword: kw.keyword, volume: kw.volume || 0, difficulty: kw.difficulty || 100 });\n    });\n  }\n  // Export-Ergebnis: einzelnes Objekt\n  if (d.keyword !== undefined && d.is_data_found === true) {\n    allKeywords.push({ keyword: d.keyword, volume: d.volume || 0, difficulty: d.difficulty || 100 });\n  }\n  // Similar/Related-Ergebnis: { total, keywords: [...] }\n  if (d.keywords && Array.isArray(d.keywords)) {\n    d.keywords.forEach(kw => {\n      allKeywords.push({ keyword: kw.keyword, volume: kw.volume || 0, difficulty: kw.difficulty || 100 });\n    });\n  }\n}\n\nconst seen = new Set();\nallKeywords = allKeywords.filter(kw => {\n  if (!kw.keyword || seen.has(kw.keyword)) return false;\n  seen.add(kw.keyword);\n  return true;\n});\n\nallKeywords = allKeywords\n  .map(kw => ({ ...kw, score: kw.volume / (kw.difficulty + 1) }))\n  .sort((a, b) => b.score - a.score);\n\nconst topKeywords = allKeywords.slice(0, 20).map(kw => kw.keyword);\n\nreturn [{ json: { topKeywords, allKeywords } }];"
+      },
+      "id": "code-filter",
+      "name": "Beste Keywords filtern & ranken",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=http://host.docker.internal:8000/api/products/{{ $node[\"Keywords vorbereiten\"].json.product_id }}/keywords",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer pplan_0967864a1b93c7f66db0c851b59dc7ba5295272d773aeb16917b7783b21d1b53"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "keywords",
+              "value": "={{ $json.topKeywords }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "save-keywords",
+      "name": "Keywords in Produkt speichern (Laravel API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1280, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: Neues Produkt angelegt": {
+      "main": [
+        [
+          { "node": "Keywords vorbereiten", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Keywords vorbereiten": {
+      "main": [
+        [
+          { "node": "SE Ranking: Bestehende Keywords bewerten", "type": "main", "index": 0 },
+          { "node": "SE Ranking: \u00c4hnliche Keywords", "type": "main", "index": 0 },
+          { "node": "SE Ranking: Verwandte Keywords", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "SE Ranking: Bestehende Keywords bewerten": {
+      "main": [
+        [{ "node": "Merge 1: Export + \u00c4hnliche", "type": "main", "index": 0 }]
+      ]
+    },
+    "SE Ranking: \u00c4hnliche Keywords": {
+      "main": [
+        [{ "node": "Merge 1: Export + \u00c4hnliche", "type": "main", "index": 1 }]
+      ]
+    },
+    "Merge 1: Export + \u00c4hnliche": {
+      "main": [
+        [{ "node": "Merge 2: + Verwandte", "type": "main", "index": 0 }]
+      ]
+    },
+    "SE Ranking: Verwandte Keywords": {
+      "main": [
+        [{ "node": "Merge 2: + Verwandte", "type": "main", "index": 1 }]
+      ]
+    },
+    "Merge 2: + Verwandte": {
+      "main": [
+        [{ "node": "Beste Keywords filtern & ranken", "type": "main", "index": 0 }]
+      ]
+    },
+    "Beste Keywords filtern & ranken": {
+      "main": [
+        [{ "node": "Keywords in Produkt speichern (Laravel API)", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

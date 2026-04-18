@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Services\N8nWebhookService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -42,6 +43,12 @@ class ProductController extends Controller
 
         $product = auth()->user()->products()->create($validated);
 
+        N8nWebhookService::productCreated(
+            $product->id,
+            $product->name,
+            $product->keywords ?? []
+        );
+
         return redirect()->route('products.show', $product)->with('success', 'Produkt erstellt!');
     }
 
@@ -50,18 +57,7 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        if (auth()->user()->id !== $product->user_id && !auth()->user()->is_admin) {
-            abort(403, 'Nicht autorisiert.');
-        }
-        return view('products.show', compact('product'));
-    }
-
-    /**
-     * Show the form for editing the product.
-     */
-    public function edit(Product $product)
-    {
-        $this->authorize('update', $product);
+        $this->authorize('view', $product);
         return view('products.show', compact('product'));
     }
 
@@ -70,9 +66,7 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
-        if (auth()->user()->id !== $product->user_id && !auth()->user()->is_admin) {
-            abort(403, 'Nicht autorisiert.');
-        }
+        $this->authorize('update', $product);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -107,13 +101,10 @@ class ProductController extends Controller
      */
     public function export(Product $product, $format)
     {
-        // Authorization check
-        if (auth()->user()->id !== $product->user_id) {
-            abort(403, 'Nicht autorisiert.');
-        }
+        $this->authorize('view', $product);
 
         if ($format === 'json') {
-            return $this->exportJSON($product);
+            return $this->exportJSON(collect([$product]));
         } elseif ($format === 'csv') {
             return $this->exportCSV([$product]);
         }
@@ -133,7 +124,7 @@ class ProductController extends Controller
         }
 
         if ($format === 'json') {
-            return $this->exportJSONMultiple($products);
+            return $this->exportJSON($products);
         } elseif ($format === 'csv') {
             return $this->exportCSV($products);
         }
@@ -142,27 +133,15 @@ class ProductController extends Controller
     }
 
     /**
-     * Export single product as JSON.
+     * Export products as JSON.
      */
-    private function exportJSON(Product $product)
-    {
-        $data = $this->formatProductData($product);
-        
-        $filename = 'product-' . $product->id . '-' . date('Y-m-d-H-i-s') . '.json';
-        
-        return response()
-            ->json($data, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
-    }
-
-    /**
-     * Export multiple products as JSON.
-     */
-    private function exportJSONMultiple($products)
+    private function exportJSON($products)
     {
         $data = $products->map(fn($product) => $this->formatProductData($product))->toArray();
         
-        $filename = 'products-export-' . date('Y-m-d-H-i-s') . '.json';
+        $filename = count($data) === 1
+            ? 'product-' . $products->first()->id . '-' . date('Y-m-d-H-i-s') . '.json'
+            : 'products-export-' . date('Y-m-d-H-i-s') . '.json';
         
         return response()
             ->json($data, 200, [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)

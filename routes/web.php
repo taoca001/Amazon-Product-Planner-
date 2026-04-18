@@ -19,8 +19,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
-    // Product Routes
-    Route::resource('products', ProductController::class);
+    // Product Routes (edit uses show view)
+    Route::resource('products', ProductController::class)->except(['edit']);
     
     // Export Routes
     Route::get('/products/{product}/export/{format}', [ProductController::class, 'export'])->name('products.export');
