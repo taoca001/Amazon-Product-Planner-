@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductImageController;
+use App\Http\Controllers\OperationsController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,6 +31,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/products/{product}/images', [ProductImageController::class, 'store'])->name('products.images.store');
     Route::delete('/products/{product}/images/{image}', [ProductImageController::class, 'destroy'])->name('products.images.destroy');
     Route::post('/products/{product}/images/reorder', [ProductImageController::class, 'reorder'])->name('products.images.reorder');
+
+    // Operations
+    Route::get('/operations', [OperationsController::class, 'index'])->name('operations.index');
+    Route::post('/operations/keyword-analysis', [OperationsController::class, 'triggerKeywordAnalysis'])->name('operations.keyword-analysis');
 });
 
 // Admin Routes - Protected by EnsureUserIsAdmin Middleware

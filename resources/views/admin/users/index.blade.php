@@ -58,7 +58,7 @@
                                 <td class="px-4 py-3 text-gray-600">{{ $user->email }}</td>
                                 <td class="px-4 py-3">
                                     @if ($user->is_admin)
-                                        <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">Admin</span>
+                                        <span class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium">Admin</span>
                                     @else
                                         <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">User</span>
                                     @endif
@@ -97,7 +97,7 @@
         @else
             <div class="text-center py-12">
                 <p class="text-gray-500 text-lg mb-4">Keine Benutzer vorhanden</p>
-                <a href="{{ route('admin.users.create') }}" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium">
+                <a href="{{ route('admin.users.create') }}" class="px-6 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium">
                     + Ersten Benutzer erstellen
                 </a>
             </div>

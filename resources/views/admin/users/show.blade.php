@@ -5,7 +5,7 @@
 @section('content')
 <div class="bg-white rounded-lg shadow-lg overflow-hidden max-w-2xl">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-purple-600 to-purple-800 px-6 py-8 text-white">
+    <div class="bg-gradient-to-r from-gray-800 to-gray-900 px-6 py-8 text-white">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold flex items-center gap-2">
@@ -16,10 +16,10 @@
                     @endif
                     {{ $user->name }}
                 </h1>
-                <p class="text-purple-100 mt-2">{{ $user->email }}</p>
+                <p class="text-gray-300 mt-2">{{ $user->email }}</p>
             </div>
             @if ($user->id !== auth()->id())
-                <a href="{{ route('admin.users.edit', $user) }}" class="px-6 py-2 bg-white text-purple-600 rounded-lg hover:bg-purple-50 font-medium transition">
+                <a href="{{ route('admin.users.edit', $user) }}" class="px-6 py-2 bg-white text-gray-900 rounded-lg hover:bg-gray-50 font-medium transition">
                     ✏️ Bearbeiten
                 </a>
             @endif
@@ -33,7 +33,7 @@
                 <p class="text-sm text-gray-500">Status</p>
                 <p class="text-lg font-semibold text-gray-900">
                     @if ($user->is_admin)
-                        <span class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">Admin</span>
+                        <span class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm">Admin</span>
                     @else
                         <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">User</span>
                     @endif
