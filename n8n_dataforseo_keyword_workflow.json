@@ -1,0 +1,163 @@
+{
+  "name": "Amazon Product Planner – Keyword-Analyse (DataForSEO)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "product-created",
+        "options": {}
+      },
+      "id": "trigger-webhook",
+      "name": "Webhook: Neues Produkt angelegt",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [100, 300],
+      "webhookId": "product-created"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\nconst productName = body.name || '';\n\nlet keywords;\nif (Array.isArray(body.keywords) && body.keywords.length > 0) {\n  keywords = body.keywords;\n} else {\n  const stopwords = new Set(['in','mit','und','oder','für','von','an','auf','bei','aus','nach','zu','zum','zur','der','die','das','ein','eine','einen','einem','einer','des','den','dem','als','am','im','ist','sind','wird','werden','haben','hat','ich','sie','er','es','wir','ihr','sich','nicht','auch','wenn','dann','so','wie','aber','noch','nur','kann','mehr','alle','viele','verschiedenen','personalisierter','personalisierte','personalisiertem','personalisierten']);\n  const words = productName.toLowerCase().split(/\\s+/).filter(w => w.length > 3 && !stopwords.has(w));\n  const seeds = [];\n  if (words.length >= 2) seeds.push(words.slice(0, 2).join(' '));\n  if (words.length >= 3) seeds.push(words.slice(0, 3).join(' '));\n  if (words.length >= 1) seeds.push(words[0]);\n  keywords = [...new Set(seeds)].slice(0, 3);\n  if (keywords.length === 0) keywords = [productName.split(' ').slice(0, 3).join(' ')];\n}\n\nreturn [{ json: { product_id: body.product_id, seedKeyword: keywords[0], keywords } }];"
+      },
+      "id": "prepare-keywords",
+      "name": "Keywords vorbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [300, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.dataforseo.com/v3/dataforseo_labs/google/keyword_suggestions/live",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify([{ keyword: $json.seedKeyword, location_code: 2276, language_code: 'de', limit: 30, order_by: ['keyword_info.search_volume,desc'] }]) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "DATAFORSEO_CREDENTIAL_ID",
+          "name": "DataForSEO Account"
+        }
+      },
+      "id": "dfs-suggestions",
+      "name": "DataForSEO: Keyword-Vorschläge",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.dataforseo.com/v3/dataforseo_labs/google/related_keywords/live",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify([{ keyword: $json.seedKeyword, location_code: 2276, language_code: 'de', limit: 30 }]) }}",
+        "options": {}
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "DATAFORSEO_CREDENTIAL_ID",
+          "name": "DataForSEO Account"
+        }
+      },
+      "id": "dfs-related",
+      "name": "DataForSEO: Verwandte Keywords",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [520, 440]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "merge-results",
+      "name": "Ergebnisse zusammenführen",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [740, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nlet allKeywords = [];\n\nfor (const item of items) {\n  const d = item.json;\n  const tasks = d.tasks || [];\n\n  for (const task of tasks) {\n    const results = task.result || [];\n    for (const result of results) {\n      const kwItems = result.items || [];\n\n      for (const kw of kwItems) {\n        // keyword_suggestions format: kw.keyword + kw.keyword_info\n        if (kw.keyword && kw.keyword_info) {\n          allKeywords.push({\n            keyword: kw.keyword,\n            volume: kw.keyword_info.search_volume || 0,\n            difficulty: kw.keyword_properties?.keyword_difficulty || 50\n          });\n        }\n        // related_keywords format: kw.keyword_data\n        else if (kw.keyword_data && kw.keyword_data.keyword) {\n          allKeywords.push({\n            keyword: kw.keyword_data.keyword,\n            volume: kw.keyword_data.keyword_info?.search_volume || 0,\n            difficulty: kw.keyword_data.keyword_properties?.keyword_difficulty || 50\n          });\n        }\n      }\n    }\n  }\n}\n\n// Deduplizieren\nconst seen = new Set();\nallKeywords = allKeywords.filter(kw => {\n  if (!kw.keyword || seen.has(kw.keyword)) return false;\n  seen.add(kw.keyword);\n  return true;\n});\n\n// Ranken: hohes Volumen + niedrige Difficulty = gut\nallKeywords = allKeywords\n  .map(kw => ({ ...kw, score: kw.volume / (kw.difficulty + 1) }))\n  .sort((a, b) => b.score - a.score);\n\nconst topKeywords = allKeywords.slice(0, 20).map(kw => kw.keyword);\n\nreturn [{ json: { topKeywords, allKeywords } }];"
+      },
+      "id": "code-filter",
+      "name": "Beste Keywords filtern & ranken",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ ($env.LARAVEL_APP_URL || 'http://host.docker.internal:8000') + '/api/products/' + $node['Keywords vorbereiten'].json.product_id + '/keywords' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.LARAVEL_API_TOKEN }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ keywords: $json.topKeywords }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "save-keywords",
+      "name": "Keywords in Produkt speichern (Laravel API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1180, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: Neues Produkt angelegt": {
+      "main": [
+        [{ "node": "Keywords vorbereiten", "type": "main", "index": 0 }]
+      ]
+    },
+    "Keywords vorbereiten": {
+      "main": [
+        [
+          { "node": "DataForSEO: Keyword-Vorschläge", "type": "main", "index": 0 },
+          { "node": "DataForSEO: Verwandte Keywords", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "DataForSEO: Keyword-Vorschläge": {
+      "main": [
+        [{ "node": "Ergebnisse zusammenführen", "type": "main", "index": 0 }]
+      ]
+    },
+    "DataForSEO: Verwandte Keywords": {
+      "main": [
+        [{ "node": "Ergebnisse zusammenführen", "type": "main", "index": 1 }]
+      ]
+    },
+    "Ergebnisse zusammenführen": {
+      "main": [
+        [{ "node": "Beste Keywords filtern & ranken", "type": "main", "index": 0 }]
+      ]
+    },
+    "Beste Keywords filtern & ranken": {
+      "main": [
+        [{ "node": "Keywords in Produkt speichern (Laravel API)", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

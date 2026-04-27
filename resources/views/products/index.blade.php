@@ -46,6 +46,7 @@
                     <!-- Product Info -->
                     <div class="p-4 space-y-3">
                         <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">{{ $product->name }}</h3>
+                        <span class="text-xs font-mono text-gray-400">ID: {{ $product->id }}</span>
                         
                         <p class="text-sm text-gray-600 line-clamp-2">
                             {{ $product->description ?? 'Keine Beschreibung' }}
@@ -118,10 +119,17 @@
         <div class="bg-white rounded-lg shadow-md p-12 text-center">
             <div class="text-6xl mb-4">📦</div>
             <h2 class="text-2xl font-bold text-gray-900 mb-2">Keine Produkte vorhanden</h2>
-            <p class="text-gray-600 mb-6">Erstelle dein erstes Produkt, um zu beginnen!</p>
+            <p class="text-gray-600 mb-2">Erstelle dein erstes Produkt, um zu beginnen!</p>
             <a href="{{ route('products.create') }}" class="inline-block px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 font-medium">
                 + Neues Produkt erstellen
             </a>
+        </div>
+    @endif
+
+    {{-- Pagination --}}
+    @if ($products->hasPages())
+        <div class="mt-4">
+            {{ $products->links() }}
         </div>
     @endif
 </div>

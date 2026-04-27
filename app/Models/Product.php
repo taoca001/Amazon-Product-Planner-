@@ -9,21 +9,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Product extends Model
 {
     protected $fillable = [
-        'user_id',
         'name',
         'description',
         'price',
         'keywords',
+        'keyword_metrics',
+        'competitor_data',
         'notes',
         'amazon_listing',
         'shopify_listing',
+        'gdrive_folder_id',
     ];
 
-    protected $casts = [
-        'keywords' => 'array',
-        'amazon_listing' => 'array',
-        'shopify_listing' => 'array',
-    ];
     /**
      * Get the user that owns the product.
      */
@@ -63,6 +60,8 @@ class Product extends Model
     {
         return [
             'keywords' => 'array',
+            'keyword_metrics' => 'array',
+            'competitor_data' => 'array',
             'amazon_listing' => 'array',
             'shopify_listing' => 'array',
             'amazon_synced_at' => 'datetime',

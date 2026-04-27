@@ -1,0 +1,165 @@
+{
+  "name": "Produkt erstellt → Google Drive Ordner anlegen",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "product-folder-create",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook: Produkt erstellt",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [180, 300],
+      "webhookId": "product-folder-create"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst productId = body.product_id;\nconst name = body.name || '';\n\nif (!productId) {\n  throw new Error('Keine product_id empfangen');\n}\n\n// Ordnername: \"42 - Produktname\"\nconst folderName = `${productId} - ${name}`;\n\nreturn [{ json: { productId, name, folderName } }];"
+      },
+      "id": "prepare-folder-name",
+      "name": "Ordnername vorbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "create",
+        "name": "={{ $json.folderName }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1mmNUPXmLTxlEhOcbt-mx9xSP2K-SEr0H",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "create-main-folder",
+      "name": "Hauptordner erstellen",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [620, 300],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "GOOGLE_CREDENTIAL_ID",
+          "name": "Google Drive Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "create",
+        "name": "raw",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "create-raw-folder",
+      "name": "raw-Unterordner erstellen",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [840, 200],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "GOOGLE_CREDENTIAL_ID",
+          "name": "Google Drive Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "create",
+        "name": "produkt",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Hauptordner erstellen').first().json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "create-produkt-folder",
+      "name": "produkt-Unterordner erstellen",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [840, 400],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "GOOGLE_CREDENTIAL_ID",
+          "name": "Google Drive Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.LARAVEL_APP_URL || 'http://host.docker.internal:8000' }}/api/products/{{ $('Ordnername vorbereiten').first().json.productId }}/gdrive-folder",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.LARAVEL_API_TOKEN }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ folder_id: $('Hauptordner erstellen').first().json.id, folder_name: $('Ordnername vorbereiten').first().json.folderName }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "notify-laravel",
+      "name": "Laravel benachrichtigen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1060, 300]
+    }
+  ],
+  "connections": {
+    "Webhook: Produkt erstellt": {
+      "main": [[{ "node": "Ordnername vorbereiten", "type": "main", "index": 0 }]]
+    },
+    "Ordnername vorbereiten": {
+      "main": [[{ "node": "Hauptordner erstellen", "type": "main", "index": 0 }]]
+    },
+    "Hauptordner erstellen": {
+      "main": [
+        [
+          { "node": "raw-Unterordner erstellen", "type": "main", "index": 0 },
+          { "node": "produkt-Unterordner erstellen", "type": "main", "index": 0 },
+          { "node": "Laravel benachrichtigen", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

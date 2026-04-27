@@ -344,6 +344,73 @@ Funktionen:
 
 ---
 
+## 🔟 Operations-Center
+
+### Feature: Keyword-Analyse
+**Route:** `POST /operations/keyword-analysis`  
+**Controller:** `OperationsController::triggerKeywordAnalysis()`
+
+Funktionen:
+- SE Ranking API Integration
+- Bulk-Keyword-Analyse für ausgewählte Produkte
+- Rate Limiting: 10 Requests/Minute
+
+### Feature: ASIN-Lookup
+**Route:** `POST /operations/asin-lookup`  
+**Controller:** `OperationsController::asinLookup()`
+
+Status: Vorbereitet, deaktiviert (benötigt Amazon Seller Central Account)
+
+---
+
+## 1️⃣1️⃣ Google Drive Integration
+
+### Feature: Automatischer Bild-Upload via n8n
+**Workflow:** `n8n_gdrive_image_upload_workflow.json`
+
+Funktionsweise:
+1. Bild in Google Drive Ordner ablegen
+2. Ordnername enthält Produkt-ID: `{id}`, `{id} - {name}`, oder `product_{id}`
+3. n8n erkennt neues Bild → lädt es herunter → upload via API
+4. "raw" im Ordner-/Dateinamen → Rohbild, sonst Produktbild
+
+---
+
+## 1️⃣2️⃣ Backup & Recovery
+
+### Feature: Datenbank-Backup
+**Command:** `php artisan db:backup`
+
+Funktionen:
+- Erstellt timestamped SQLite-Backup in `storage/backups/`
+- Automatische Cleanup: Backups älter als 7 Tage werden gelöscht
+- Konfigurierbar: `--keep=14` für 14 Tage Aufbewahrung
+- Tägliches Auto-Backup via Scheduler (02:00 Uhr)
+
+### Feature: Deployment
+**Script:** `deploy.sh`
+
+Einmaliger Befehl für komplettes Deployment:
+Wartungsmodus → Git Pull → Composer → npm build → Migrate → Caches → Backup → Live
+
+---
+
+## 1️⃣3️⃣ Sicherheits-Features
+
+| Feature | Details |
+|---------|---------|
+| API-Token Hashing | SHA-256, Klartext nur einmalig sichtbar |
+| Rate Limiting | Login 5/min, API 60/min, Operations 10/min |
+| Session-Verschlüsselung | `SESSION_ENCRYPT=true` |
+| Mass-Assignment-Schutz | `user_id` nicht in `$fillable` |
+| HTTPS in Produktion | Automatisch via `URL::forceScheme` |
+| Custom Error Pages | 404, 419, 500, 503 — kein Stack-Trace-Leak |
+| Vite-Build | Keine externen CDN-Abhängigkeiten |
+| CSRF-Protection | Auf allen Formularen |
+| Pagination | Produktliste limitiert auf 20/Seite |
+
+---
+
 ## 🎯 Keyboard Shortcuts (geplant)
 
 - `Ctrl+N` → Neues Produkt
@@ -352,7 +419,81 @@ Funktionen:
 
 ---
 
-## 📱 Responsive Design
+## �️ User Access Management (UAM)
+
+### Feature: Konto-Sperrung (is_active)
+**Middleware:** `EnsureUserIsActive`  
+**Admin-Route:** `PATCH /admin/users/{user}/toggle-active`
+
+**Verhalten:**
+- Jeder Benutzer hat ein `is_active`-Flag (Standard: `true`)
+- Die Middleware prüft das Flag bei **jedem** Request — gesperrte Nutzer werden sofort ausgeloggt
+- Admin kann Konten über die Benutzerliste oder Detailseite sperren/entsperren
+- **Selbst-Sperre verhindert:** Admin kann eigenes Konto nicht sperren
+
+```php
+// EnsureUserIsActive (Middleware)
+if (Auth::check() && !Auth::user()->is_active) {
+    Auth::logout();
+    return redirect()->route('login')->withErrors(['email' => 'Konto deaktiviert.']);
+}
+```
+
+---
+
+### Feature: Login-Tracking (last_login_at)
+**Controller:** `Auth\AuthenticatedSessionController::store()`  
+**Feld:** `users.last_login_at` (timestamp, nullable)
+
+**Verhalten:**
+- Bei jedem erfolgreichen Login wird `last_login_at` auf `now()` gesetzt
+- Wird im Admin-Panel in der Benutzerliste und Detailseite angezeigt (`diffForHumans()`)
+
+---
+
+### Feature: API-Token-Verwaltung (Profil)
+**Route:** `GET /profile/tokens`, `POST /profile/tokens`, `DELETE /profile/tokens/{token}`  
+**Controller:** `ApiTokenController`  
+**View:** `resources/views/profile/tokens.blade.php`
+
+**Funktionen:**
+- Bis zu **10 Tokens** pro Benutzer
+- Token-Name (required) + optionales Ablaufdatum
+- Neuer Token wird **einmalig** als Flash-Nachricht angezeigt
+- Token-Tabelle mit Status (Aktiv / Abgelaufen) und Widerruf-Aktion
+- Link im Benutzer-Dropdown: "🔑 API-Tokens"
+
+**Validierung:**
+```php
+'name'       => 'required|string|max:100',
+'expires_at' => 'nullable|date|after:today',
+```
+
+---
+
+### Feature: Token-Ablaufdatum (expires_at)
+**Feld:** `api_tokens.expires_at` (timestamp, nullable)  
+**Middleware:** `AuthenticateApiToken`
+
+**Verhalten:**
+- Tokens können beim Erstellen mit einem Ablaufdatum versehen werden
+- Die API-Middleware prüft `isExpired()` → 401 bei abgelaufenem Token
+- `ApiToken::isValid()` prüft: nicht abgelaufen AND Benutzer ist aktiv
+
+---
+
+### Feature: Admin-Token-Verwaltung
+**Route:** `DELETE /admin/users/{user}/tokens/{token}`  
+**Controller:** `Admin\UserController::revokeToken()`
+
+**Verhalten:**
+- Admin kann alle Tokens eines beliebigen Nutzers auf der Detailseite (`/admin/users/{id}`) einsehen
+- Tabelle zeigt: Token-Name, Zuletzt genutzt, Läuft ab, Status, Widerruf-Button
+- Token-Zugehörigkeit wird serverseitig geprüft (Ownership-Check → 404)
+
+---
+
+## �📱 Responsive Design
 
 **Breakpoints:**
 - 📱 Mobile (< 640px)
@@ -366,4 +507,4 @@ Funktionen:
 
 ---
 
-**Zuletzt aktualisiert:** 18. April 2026
+**Zuletzt aktualisiert:** 28. April 2026

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['product_id', 'type', 'file_path', 'file_name', 'file_size', 'mime_type', 'order'])]
+#[Fillable(['product_id', 'type', 'file_path', 'file_name', 'file_size', 'mime_type', 'order', 'gdrive_file_id'])]
 class ProductImage extends Model
 {
     /**

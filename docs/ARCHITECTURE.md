@@ -63,8 +63,10 @@ Technische Übersicht der Applikation: Datenbankschema, Modell-Beziehungen und A
 │      API_TOKENS                      │
 ├──────────────────────────────────────┤
 │ PK  id                               │
+│ FK  user_id       (BIGINT)           │
 │     name          (VARCHAR)          │
 │     token         (VARCHAR, UNIQUE)  │
+│              → SHA-256 Hash          │
 │     last_used_at  (TIMESTAMP, null)   │
 │     created_at                       │
 │     updated_at                       │
@@ -123,7 +125,11 @@ class ProductImage extends Model {
 ```php
 class ApiToken extends Model {
     // Token für externe API-Zugriffe (n8n, etc.)
-    // Felder: name, token (unique), last_used_at
+    // Felder: name, token (SHA-256 Hash), user_id, last_used_at
+
+    public static function generateToken(): string;   // Erzeugt pplan_ + 32 random bytes
+    public static function hashToken(string $token): string;  // SHA-256
+    public static function findByToken(string $token): ?self; // Hash-Vergleich
 }
 ```
 
@@ -143,8 +149,15 @@ amazon-product-planner/
 │   │   │   └── Api/
 │   │   │       ├── ProductKeywordController.php   (Keyword-API)
 │   │   │       └── ProductImageUploadController.php (Bild-Upload-API)
-│   │   └── Middleware/
-│   │       └── AuthenticateApiToken.php   (Bearer-Token-Auth)
+│   │   ├── Middleware/
+│   │   │   └── AuthenticateApiToken.php   (Bearer-Token-Auth)
+│   │   └── Controllers/
+│   │       └── OperationsController.php    (Keyword-Analyse, ASIN-Lookup)
+│   │
+│   ├── Console/
+│   │   └── Commands/
+│   │       ├── BackupDatabase.php          (DB-Backup)
+│   │       └── GenerateApiToken.php        (Token-Erstellung)
 │   │
 │   ├── Models/
 │   │   ├── User.php                        (Auth-Benutzer)
@@ -181,6 +194,13 @@ amazon-product-planner/
 │       ├── admin/
 │       │   └── users/
 │       │       └── index.blade.php         (Benutzerverwaltung)
+│       ├── errors/
+│       │   ├── 404.blade.php               (Nicht gefunden)
+│       │   ├── 419.blade.php               (Sitzung abgelaufen)
+│       │   ├── 500.blade.php               (Serverfehler)
+│       │   └── 503.blade.php               (Wartungsmodus)
+│       ├── operations/
+│       │   └── index.blade.php             (Operations-Center)
 │       └── dashboard.blade.php
 │
 ├── database/
@@ -189,7 +209,9 @@ amazon-product-planner/
 │       ├── create_product_images_table.php
 │       └── create_api_tokens_table.php
 │
-├── n8n_google_drive_to_product_image_upload.json  (n8n Workflow)
+├── n8n_google_drive_to_product_image_upload.json  (n8n Keyword-Workflow)
+├── n8n_gdrive_image_upload_workflow.json          (n8n Google Drive → Bild-Upload)
+├── deploy.sh                                       (Deployment-Script)
 └── docs/
 ```
 │

@@ -36,7 +36,22 @@ return [
     ],
 
     'n8n' => [
-        'webhook_url' => env('N8N_WEBHOOK_URL'),
+        'webhook_url'             => env('N8N_WEBHOOK_URL'),
+        'folder_webhook_url'      => env('N8N_FOLDER_WEBHOOK_URL'),
+        'drive_sync_webhook_url'  => env('N8N_DRIVE_SYNC_WEBHOOK_URL'),
+    ],
+
+    'dataforseo' => [
+        'login'    => env('DATAFORSEO_LOGIN'),
+        'password' => env('DATAFORSEO_PASSWORD'),
+    ],
+
+    'sp_api' => [
+        'client_id' => env('SP_API_CLIENT_ID'),
+        'client_secret' => env('SP_API_CLIENT_SECRET'),
+        'refresh_token' => env('SP_API_REFRESH_TOKEN'),
+        'marketplace_id' => env('SP_API_MARKETPLACE_ID', 'A1PA6795UKMFR9'),
+        'endpoint' => env('SP_API_ENDPOINT', 'https://sellingpartnerapi-eu.amazon.com'),
     ],
 
 ];

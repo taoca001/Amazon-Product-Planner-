@@ -4,17 +4,18 @@ Vollständige Anleitung zum Aufsetzen des Amazon Product Planners in Ihrer lokal
 
 ## 📋 Anforderungen
 
-- **PHP:** 8.3 oder höher
-- **Datenbank:** SQLite (Standard) oder MySQL/PostgreSQL
+- **PHP:** 8.5 oder höher
+- **Datenbank:** SQLite (Standard)
 - **Package Manager:** Composer 2.0+
-- **Node.js:** 18+ (optional, für Vite-Build)
+- **Node.js:** 18+ (für Vite-Build — Pflicht)
 - **Git:** Zum Klonen des Repositories
 - **n8n:** 2.8+ (optional, für Keyword-Automatisierung via Docker)
 
 ### System-Check
 ```bash
-php -v          # PHP-Version überprüfen (≥ 8.3)
+php -v          # PHP-Version überprüfen (≥ 8.5)
 composer -v     # Composer-Version überprüfen
+node -v         # Node.js-Version überprüfen (≥ 18)
 sqlite3 --version  # SQLite-Version überprüfen
 ```
 
@@ -31,6 +32,7 @@ cd amazon-product-planner
 ### 2. Dependencies installieren
 ```bash
 composer install
+npm install
 ```
 
 ### 3. Umgebungsvariablen konfigurieren
@@ -95,6 +97,17 @@ php artisan db:seed
 Erzeugt einen Test-Benutzer:
 - Email: `test@example.com`
 - Passwort: `password`
+
+### 9. Frontend-Assets bauen
+```bash
+npm run build
+```
+
+### 10. API-Token erstellen (für n8n)
+```bash
+php artisan api:token 1 --name="n8n"
+# Token wird nur einmal angezeigt — kopieren!
+```
 
 ---
 
@@ -162,14 +175,20 @@ chmod -R 775 public/storage
 |--------|-------------|
 | `app/Models` | Eloquent Models (Product, User, etc.) |
 | `app/Http/Controllers` | Controller-Logik |
+| `app/Http/Controllers/Api` | API-Controller (Keyword, Image-Upload) |
+| `app/Console/Commands` | Artisan-Commands (Backup, Token) |
 | `app/Policies` | Autorisierungs-Policies |
 | `database/migrations` | Datenbank-Migrationen |
 | `database/seeders` | Test-Daten Seeder |
 | `resources/views` | Blade Templates |
+| `resources/views/errors` | Custom Error Pages (404, 500, etc.) |
 | `routes/web.php` | Web-Route-Definitionen |
 | `routes/api.php` | API-Route-Definitionen (Bearer-Token-Auth) |
+| `routes/console.php` | Scheduler (tägliches Backup) |
 | `storage/app/public` | Hochgeladene Dateien |
-| `storage/logs` | Laravel Logs |
+| `storage/backups` | SQLite-Datenbank-Backups |
+| `storage/logs` | Laravel Logs (daily rotation) |
+| `public/build` | Vite-Build-Assets (CSS, JS) |
 | `public/storage` | Öffentlicher Symlink zu storage/app/public |
 
 ---
@@ -221,27 +240,47 @@ php artisan test
 
 ## 📦 Production Deployment
 
-Vor dem Deployment zum Live-Server:
-
+### Quick-Deploy (empfohlen)
 ```bash
-# 1. Composer dependencies (no dev)
-composer install --no-dev --optimize-autoloader
-
-# 2. Cache konfigurieren
-php artisan config:cache
-
-# 3. Routes cachen
-php artisan route:cache
-
-# 4. Views pre-compile
-php artisan view:cache
-
-# 5. Environment auf production setzen
-# Bearbeite .env: APP_ENV=production
-
-# 6. Debugging ausschalten
-# Bearbeite .env: APP_DEBUG=false
+bash deploy.sh
 ```
+
+Das Script führt automatisch aus:
+1. Wartungsmodus aktivieren
+2. Git Pull
+3. `composer install --no-dev --optimize-autoloader`
+4. `npm ci && npm run build`
+5. `php artisan migrate --force`
+6. Config/Route/View-Cache aufbauen
+7. Datenbank-Backup
+8. Wartungsmodus deaktivieren
+
+### Manuelle Schritte
+```bash
+# .env anpassen:
+APP_ENV=production
+APP_DEBUG=false
+LOG_LEVEL=warning
+SESSION_ENCRYPT=true
+```
+
+### Backup & Scheduler
+```bash
+# Manuelles Backup
+php artisan db:backup
+
+# Crontab einrichten für tägliches Auto-Backup (02:00 Uhr)
+crontab -e
+* * * * * cd /pfad/zu/amazon-product-planner && php artisan schedule:run >> /dev/null 2>&1
+```
+
+### Artisan-Befehle
+| Befehl | Beschreibung |
+|--------|-------------|
+| `php artisan db:backup` | SQLite-Backup erstellen |
+| `php artisan db:backup --keep=14` | Backups 14 Tage aufbewahren |
+| `php artisan api:token {user_id}` | Neuen API-Token erstellen |
+| `php artisan api:token 1 --name=n8n` | Token mit Namen erstellen |
 
 ---
 

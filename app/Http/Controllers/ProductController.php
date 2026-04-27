@@ -16,7 +16,7 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = auth()->user()->products()->latest()->get();
+        $products = auth()->user()->products()->latest()->paginate(20);
         return view('products.index', compact('products'));
     }
 
@@ -43,10 +43,15 @@ class ProductController extends Controller
 
         $product = auth()->user()->products()->create($validated);
 
-        N8nWebhookService::productCreated(
+        N8nWebhookService::triggerKeywordAnalysis(
             $product->id,
             $product->name,
             $product->keywords ?? []
+        );
+
+        N8nWebhookService::triggerCreateDriveFolder(
+            $product->id,
+            $product->name
         );
 
         return redirect()->route('products.show', $product)->with('success', 'Produkt erstellt!');
@@ -188,16 +193,16 @@ class ProductController extends Controller
             foreach ($products as $product) {
                 fputcsv($file, [
                     $product->id,
-                    $product->name,
-                    $product->description,
+                    $this->sanitizeCsvValue($product->name),
+                    $this->sanitizeCsvValue($product->description),
                     $product->price,
-                    implode(', ', $product->keywords ?? []),
-                    $product->notes,
-                    $product->amazon_listing['asin'] ?? '',
-                    $product->amazon_listing['title'] ?? '',
+                    $this->sanitizeCsvValue(implode(', ', $product->keywords ?? [])),
+                    $this->sanitizeCsvValue($product->notes),
+                    $this->sanitizeCsvValue($product->amazon_listing['asin'] ?? ''),
+                    $this->sanitizeCsvValue($product->amazon_listing['title'] ?? ''),
                     $product->amazon_listing['status'] ?? '',
                     $product->shopify_listing['product_id'] ?? '',
-                    $product->shopify_listing['title'] ?? '',
+                    $this->sanitizeCsvValue($product->shopify_listing['title'] ?? ''),
                     $product->shopify_listing['price'] ?? '',
                     $product->created_at?->format('d.m.Y H:i'),
                     $product->updated_at?->format('d.m.Y H:i'),
@@ -208,6 +213,20 @@ class ProductController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Prevent CSV formula injection (OWASP: cells starting with =, +, -, @ trigger formulas in Excel).
+     */
+    private function sanitizeCsvValue(?string $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        if (in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+            return "'" . $value;
+        }
+        return $value;
     }
 
     /**

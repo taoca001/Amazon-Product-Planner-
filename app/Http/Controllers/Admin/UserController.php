@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiToken;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -14,7 +15,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::latest()->paginate(15);
+        $users = User::withCount(['products', 'apiTokens'])->latest()->paginate(15);
         return view('admin.users.index', compact('users'));
     }
 
@@ -51,7 +52,9 @@ class UserController extends Controller
      */
     public function show(User $user)
     {
-        return view('admin.users.show', compact('user'));
+        $user->loadCount(['products', 'apiTokens']);
+        $tokens = $user->apiTokens()->latest()->get();
+        return view('admin.users.show', compact('user', 'tokens'));
     }
 
     /**
@@ -72,6 +75,7 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:8|confirmed',
             'is_admin' => 'boolean',
+            'is_active' => 'boolean',
         ]);
 
         if ($validated['password']) {
@@ -81,6 +85,13 @@ class UserController extends Controller
         }
 
         $validated['is_admin'] = $request->boolean('is_admin', false);
+
+        // Nicht das eigene Konto deaktivieren
+        if ($user->id !== auth()->id()) {
+            $validated['is_active'] = $request->boolean('is_active', false);
+        } else {
+            unset($validated['is_active']);
+        }
 
         $user->update($validated);
 
@@ -99,5 +110,34 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('admin.users.index')->with('success', 'Benutzer gelöscht!');
+    }
+
+    /**
+     * Toggle active/inactive status for a user.
+     */
+    public function toggleActive(User $user)
+    {
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Du kannst deinen eigenen Account nicht deaktivieren.');
+        }
+
+        $user->update(['is_active' => !$user->is_active]);
+
+        $status = $user->is_active ? 'aktiviert' : 'deaktiviert';
+        return back()->with('success', "{$user->name} wurde {$status}.");
+    }
+
+    /**
+     * Revoke an API token belonging to a specific user.
+     */
+    public function revokeToken(User $user, ApiToken $token)
+    {
+        if ($token->user_id !== $user->id) {
+            abort(404);
+        }
+
+        $token->delete();
+
+        return back()->with('success', "Token \"{$token->name}\" widerrufen.");
     }
 }

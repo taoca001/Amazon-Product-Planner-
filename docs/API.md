@@ -25,7 +25,19 @@ Alle API-Endpoints (`/api/*`) erfordern einen Bearer-Token:
 curl -H "Authorization: Bearer pplan_..." http://localhost:8000/api/products
 ```
 
-Tokens werden in der `api_tokens`-Tabelle gespeichert und via `AuthenticateApiToken`-Middleware geprüft.
+Tokens werden als **SHA-256 Hash** in der `api_tokens`-Tabelle gespeichert. Der Klartext-Token wird nur einmalig bei der Erstellung angezeigt.
+
+#### Token erstellen
+```bash
+php artisan api:token {user_id} --name="n8n"
+```
+
+#### Rate Limiting
+- API-Endpoints: **60 Requests/Minute** (pro Token)
+- Antwort bei Überschreitung: `429 Too Many Requests`
+
+#### Autorisierung
+Jeder API-Endpoint prüft, ob der Token-Besitzer (`api_token.user_id`) auch der Besitzer des angeforderten Produkts ist. Bei Mismatch: `403 Forbidden`.
 
 ---
 

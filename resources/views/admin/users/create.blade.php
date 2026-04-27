@@ -60,9 +60,9 @@
             </div>
 
             <!-- Admin Checkbox -->
-            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <input type="checkbox" id="is_admin" name="is_admin" value="1"
-                       class="w-5 h-5 text-gray-900 rounded focus:ring-2 focus:ring-gray-500"
+                       class="w-4 h-4 text-gray-900 rounded focus:ring-2 focus:ring-gray-500"
                        {{ old('is_admin') ? 'checked' : '' }}>
                 <label for="is_admin" class="text-sm font-medium text-gray-700">
                     👑 Admin-Rechte vergeben

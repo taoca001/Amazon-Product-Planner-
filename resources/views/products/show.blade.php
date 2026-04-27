@@ -8,7 +8,11 @@
     <div class="px-6 py-3 border-b border-gray-200 flex items-center justify-between">
         <div>
             <h1 class="text-xl font-bold text-gray-900">{{ $product->name }}</h1>
-            <p class="text-gray-400 text-xs mt-0.5">Erstellt: {{ $product->created_at->format('d.m.Y H:i') }} &middot; Bearbeitet: {{ $product->updated_at->format('d.m.Y H:i') }}</p>
+            <p class="text-gray-400 text-xs mt-0.5">
+                ID: <span class="font-mono bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{{ $product->id }}</span>
+                &middot; Erstellt: {{ $product->created_at->format('d.m.Y H:i') }}
+                &middot; Bearbeitet: {{ $product->updated_at->format('d.m.Y H:i') }}
+            </p>
         </div>
     </div>
 
@@ -135,7 +139,7 @@
             <div id="keywords" class="tab-content hidden space-y-6">
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 mb-1">🔑 Keywords & SEO</h3>
-                    <p class="text-sm text-gray-500 mb-4">Diese Keywords werden automatisch per n8n &amp; SE Ranking generiert und können manuell ergänzt werden.</p>
+                    <p class="text-sm text-gray-500 mb-4">Diese Keywords werden automatisch per n8n & DataForSEO generiert und können manuell ergänzt werden.</p>
                     <div id="keywords-container" class="space-y-2 mb-4">
                         @if ($product->keywords)
                             @foreach ($product->keywords as $keyword)
@@ -157,7 +161,47 @@
                     </button>
                 </div>
 
-                <div class="pt-6 border-t">
+                {{-- Keyword-Metriken (DataForSEO) --}}
+                @if ($product->keyword_metrics && count($product->keyword_metrics) > 0)
+                    <div class="pt-4 border-t">
+                        <h4 class="text-sm font-semibold text-gray-700 mb-3">📊 Keyword-Metriken (via DataForSEO)</h4>
+                        <div class="overflow-x-auto rounded-lg border border-gray-200">
+                            <table class="min-w-full text-sm divide-y divide-gray-100">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Keyword</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Volumen/Monat</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Wettbewerb</th>
+                                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">CPC (€)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-50 bg-white">
+                                    @foreach ($product->keyword_metrics as $m)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-2 text-gray-900">{{ $m['keyword'] }}</td>
+                                            <td class="px-4 py-2 text-right font-medium text-gray-700">
+                                                {{ $m['volume'] ? number_format($m['volume']) : '—' }}
+                                            </td>
+                                            <td class="px-4 py-2 text-right">
+                                                <x-keyword-competition :competition="$m['competition'] ?? null" />
+                                            </td>
+                                            <td class="px-4 py-2 text-right text-gray-600">
+                                                {{ isset($m['cpc']) && $m['cpc'] ? number_format($m['cpc'], 2, ',', '.') . ' €' : '—' }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2">Metriken aktualisieren: Operations → Keyword-Metriken abrufen</p>
+                    </div>
+                @else
+                    <div class="pt-4 border-t">
+                        <p class="text-xs text-gray-400 italic">Noch keine Metriken. Gehe zu <a href="{{ route('operations.index') }}" class="underline hover:text-gray-700">Operationen → Keyword-Metriken abrufen</a>.</p>
+                    </div>
+                @endif
+
+                <div class="pt-4 border-t">
                     <h4 class="text-sm font-semibold text-gray-700 mb-2">Keywords übertragen</h4>
                     <p class="text-sm text-gray-500 mb-4">Überträgt die aktuellen Keywords komma-getrennt in das Amazon-Keywords-Feld und das Shopify-Tags-Feld.</p>
                     <button type="button" id="transfer-keywords-btn"
@@ -169,6 +213,31 @@
 
             <!-- Tab: Bilder -->
             <div id="images" class="tab-content hidden space-y-8">
+                <!-- Google Drive Hinweis + Sync Button -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start justify-between gap-3">
+                    <div class="flex items-start gap-3">
+                        <span class="text-xl mt-0.5">📁</span>
+                        <div>
+                            <p class="text-sm font-medium text-blue-900">Google Drive Auto-Upload</p>
+                            @if($product->gdrive_folder_id)
+                                <p class="text-sm text-blue-700">Bilder im Drive-Ordner dieses Produkts werden beim Sync automatisch importiert.</p>
+                            @else
+                                <p class="text-sm text-blue-700">Noch kein Drive-Ordner verknüpft. Erstelle das Produkt neu oder verknüpfe einen Ordner manuell.</p>
+                            @endif
+                        </div>
+                    </div>
+                    @if($product->gdrive_folder_id)
+                    <button id="drive-sync-btn"
+                            data-product-id="{{ $product->id }}"
+                            class="shrink-0 flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition disabled:opacity-50">
+                        <svg id="drive-sync-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        <span id="drive-sync-label">Drive synchronisieren</span>
+                    </button>
+                    @endif
+                </div>
+
                 <!-- Raw Images -->
                 <div class="space-y-4">
                     <h3 class="text-lg font-semibold text-gray-900">📸 Rohbilder (Original)</h3>
@@ -421,6 +490,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Drive Sync Button
+const driveSyncBtn = document.getElementById('drive-sync-btn');
+if (driveSyncBtn) {
+    driveSyncBtn.addEventListener('click', async function () {
+        const productId = this.dataset.productId;
+        const label = document.getElementById('drive-sync-label');
+        const icon = document.getElementById('drive-sync-icon');
+
+        this.disabled = true;
+        label.textContent = 'Sync läuft…';
+        icon.classList.add('animate-spin');
+
+        try {
+            const response = await fetch(`/products/${productId}/drive-sync`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                },
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                label.textContent = 'Gestartet!';
+                icon.classList.remove('animate-spin');
+                setTimeout(() => {
+                    label.textContent = 'Drive synchronisieren';
+                    this.disabled = false;
+                    window.location.reload();
+                }, 2500);
+            } else {
+                label.textContent = data.message || 'Fehler';
+                icon.classList.remove('animate-spin');
+                setTimeout(() => {
+                    label.textContent = 'Drive synchronisieren';
+                    this.disabled = false;
+                }, 3000);
+            }
+        } catch (e) {
+            label.textContent = 'Fehler';
+            icon.classList.remove('animate-spin');
+            setTimeout(() => {
+                label.textContent = 'Drive synchronisieren';
+                this.disabled = false;
+            }, 3000);
+        }
+    });
+}
 </script>
 
 <style>
