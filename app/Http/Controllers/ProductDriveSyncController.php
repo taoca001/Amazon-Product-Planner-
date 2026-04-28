@@ -4,10 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Services\N8nWebhookService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
 
 class ProductDriveSyncController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Löst den Google Drive Sync für ein Produkt aus.
      * n8n liest den Drive-Ordner des Produkts und lädt neue Bilder hoch.

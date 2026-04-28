@@ -86,13 +86,13 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.LARAVEL_APP_URL || 'http://host.docker.internal:8000' }}/api/products/={{ $('Bilder filtern').first().json.productId }}/images/upload",
+        "url": "={{ ($env.LARAVEL_APP_URL || 'http://host.docker.internal:8000') + '/api/products/' + $('Bilder filtern').item.json.productId + '/images/upload' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer {{ $env.LARAVEL_API_TOKEN }}"
+              "value": "={{ 'Bearer ' + $env.LARAVEL_API_TOKEN }}"
             },
             {
               "name": "Accept",
@@ -112,12 +112,12 @@
             {
               "parameterType": "formData",
               "name": "type",
-              "value": "={{ $('Bilder filtern').first().json.imageType }}"
+              "value": "={{ $('Bilder filtern').item.json.imageType }}"
             },
             {
               "parameterType": "formData",
               "name": "gdrive_file_id",
-              "value": "={{ $('Bilder filtern').first().json.fileId }}"
+              "value": "={{ $('Bilder filtern').item.json.fileId }}"
             }
           ]
         },
