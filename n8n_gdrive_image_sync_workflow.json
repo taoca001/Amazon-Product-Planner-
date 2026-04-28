@@ -28,19 +28,12 @@
       "parameters": {
         "resource": "fileFolder",
         "operation": "list",
-        "driveId": {
-          "__rl": true,
-          "value": "My Drive",
-          "mode": "list"
-        },
         "folderId": {
           "__rl": true,
           "value": "={{ $json.folderId }}",
           "mode": "id"
         },
-        "options": {
-          "fields": ["id", "name", "mimeType", "size"]
-        }
+        "options": {}
       },
       "id": "list-files",
       "name": "Dateien im Ordner auflisten",
@@ -68,7 +61,11 @@
       "parameters": {
         "resource": "file",
         "operation": "download",
-        "fileId": "={{ $json.fileId }}",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.fileId }}",
+          "mode": "id"
+        },
         "options": {}
       },
       "id": "download-image",
