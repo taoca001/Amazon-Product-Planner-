@@ -27,11 +27,17 @@
     {
       "parameters": {
         "resource": "fileFolder",
-        "operation": "list",
-        "folderId": {
-          "__rl": true,
-          "value": "={{ $json.folderId }}",
-          "mode": "id"
+        "operation": "search",
+        "searchMethod": "query",
+        "queryString": "mimeType contains 'image/'",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $json.folderId }}",
+            "mode": "id"
+          },
+          "whatToSearch": "files"
         },
         "options": {}
       },
